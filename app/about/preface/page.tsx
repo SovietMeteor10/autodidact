@@ -13,7 +13,6 @@ export default function AboutPreface() {
         style={{
           color: '#ffffff',
           textDecoration: 'none',
-          fontSize: '1rem',
           whiteSpace: 'nowrap'
         }}
       >
@@ -24,7 +23,7 @@ export default function AboutPreface() {
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'flex-start',
+        alignItems: 'baseline',
         marginBottom: '1.5rem',
         gap: '1rem'
       }}>

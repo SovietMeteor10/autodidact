@@ -85,7 +85,6 @@ export default function FolderView({ title, description, parentPath, contents, f
         style={{
           color: '#ffffff',
           textDecoration: 'none',
-          fontSize: '1rem',
           whiteSpace: 'nowrap'
         }}
       >
@@ -96,7 +95,7 @@ export default function FolderView({ title, description, parentPath, contents, f
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'flex-start',
+        alignItems: 'baseline',
         marginBottom: '1.5rem',
         gap: '1rem'
       }}>

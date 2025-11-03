@@ -18,7 +18,6 @@ export default function FilePathSegments({ filePath }: { filePath: string }) {
       color: '#999',
       fontSize: '0.9rem',
       fontFamily: 'monospace',
-      paddingTop: '0.5rem',
       display: 'flex',
       alignItems: 'center'
     }}>

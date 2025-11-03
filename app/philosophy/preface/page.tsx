@@ -13,7 +13,6 @@ export default function PhilosophyPreface() {
         style={{
           color: '#ffffff',
           textDecoration: 'none',
-          fontSize: '1rem',
           whiteSpace: 'nowrap'
         }}
       >

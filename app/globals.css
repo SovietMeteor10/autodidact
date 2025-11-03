@@ -60,8 +60,9 @@ a {
 @media (min-width: 800px) {
   .back-button {
     position: absolute !important;
-    left: -6rem !important;
-    top: 2rem !important;
+    left: -5rem !important;
+    top: calc(2rem + 0.75rem) !important;
+    font-size: 0.85rem !important;
   }
 }
 
@@ -72,6 +73,7 @@ a {
     top: auto !important;
     margin-bottom: 1rem !important;
     display: block !important;
+    font-size: 0.85rem !important;
   }
 }
 
