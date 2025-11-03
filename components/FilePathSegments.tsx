@@ -1,0 +1,44 @@
+'use client'
+
+import Link from 'next/link'
+
+export default function FilePathSegments({ filePath }: { filePath: string }) {
+  // Remove leading ./
+  const cleanPath = filePath.startsWith('./') ? filePath.slice(2) : filePath
+  const segments = cleanPath.split('/')
+  
+  // Build paths for each segment
+  const segmentPaths: string[] = []
+  for (let i = 0; i < segments.length; i++) {
+    segmentPaths.push('/' + segments.slice(0, i + 1).join('/'))
+  }
+  
+  return (
+    <div style={{
+      color: '#999',
+      fontSize: '0.9rem',
+      fontFamily: 'monospace',
+      paddingTop: '0.5rem',
+      display: 'flex',
+      alignItems: 'center'
+    }}>
+      <span style={{ color: '#999' }}>./</span>
+      {segments.map((segment, index) => (
+        <span key={index}>
+          <Link
+            href={segmentPaths[index]}
+            className="folder-link"
+            style={{
+              color: '#999',
+              textDecoration: 'none'
+            }}
+          >
+            {segment}
+          </Link>
+          {index < segments.length - 1 && <span style={{ color: '#999' }}>/</span>}
+        </span>
+      ))}
+    </div>
+  )
+}
+
