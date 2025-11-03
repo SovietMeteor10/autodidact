@@ -11,6 +11,9 @@ interface PageProps {
   }
 }
 
+// Force dynamic rendering - this route depends on file system access at runtime
+export const dynamic = 'force-dynamic'
+
 // Get folder description from a description.md file if it exists
 async function getFolderDescription(folderPath: string): Promise<string | null> {
   try {
