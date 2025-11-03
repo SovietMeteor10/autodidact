@@ -13,6 +13,8 @@ interface PageProps {
 
 // Force dynamic rendering - this route depends on file system access at runtime
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+export const dynamicParams = true
 
 // Get folder description from a description.md file if it exists
 async function getFolderDescription(folderPath: string): Promise<string | null> {
@@ -28,14 +30,19 @@ async function getFolderDescription(folderPath: string): Promise<string | null> 
 export default async function NestedFolderPage({ params }: PageProps) {
   const { section, path } = params
   
+  console.log('[NestedFolderPage] Rendering section:', section, 'path:', path)
+  console.log('[NestedFolderPage] process.cwd():', process.cwd())
+  
   if (!path || path.length === 0) {
     // This should be handled by [section]/page.tsx
+    console.log('[NestedFolderPage] No path, calling notFound()')
     notFound()
     return
   }
   
   // Build the full folder path
   const folderPath = [section, ...path].join('/')
+  console.log('[NestedFolderPage] Full folder path:', folderPath)
   
   // Check if this path corresponds to a page route first
   const lastSegment = path[path.length - 1]

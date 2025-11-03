@@ -13,6 +13,8 @@ interface PageProps {
 
 // Force dynamic rendering - this route depends on file system access at runtime
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+export const dynamicParams = true
 
 // Get folder description from a description.md file if it exists
 async function getFolderDescription(section: string): Promise<string | null> {
@@ -28,8 +30,12 @@ async function getFolderDescription(section: string): Promise<string | null> {
 export default async function SectionPage({ params }: PageProps) {
   const { section } = params
   
+  console.log('[SectionPage] Rendering section:', section)
+  console.log('[SectionPage] process.cwd():', process.cwd())
+  
   // Get the folder contents
   const contents = await getFolderContents(section)
+  console.log('[SectionPage] Found contents:', contents.length, 'items')
   
   // If no contents, this might not be a valid folder
   if (contents.length === 0) {
