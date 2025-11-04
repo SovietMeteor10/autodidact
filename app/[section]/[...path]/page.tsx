@@ -20,10 +20,33 @@ export const revalidate = 0
 // Don't export generateStaticParams - this forces Next.js to render on-demand
 // If we export it with an empty array, Next.js still tries to statically generate
 
+// Get the project root (same logic as getFolderContents)
+async function getProjectRoot(): Promise<string> {
+  const { stat } = await import('fs/promises')
+  const { resolve, join } = await import('path')
+  const cwd = process.cwd()
+  
+  if (cwd.includes('.next')) {
+    return resolve(cwd, '..')
+  }
+  
+  const possibleRoots = [cwd, resolve(cwd, '..'), resolve(cwd, '../..'), resolve(cwd, '../../..')]
+  for (const root of possibleRoots) {
+    try {
+      await stat(join(root, 'app'))
+      return root
+    } catch {
+      continue
+    }
+  }
+  return cwd
+}
+
 // Get folder description from a description.md file if it exists
 async function getFolderDescription(folderPath: string): Promise<string | null> {
   try {
-    const descPath = join(process.cwd(), 'app', folderPath, 'description.md')
+    const projectRoot = await getProjectRoot()
+    const descPath = join(projectRoot, 'app', folderPath, 'description.md')
     const content = await readFile(descPath, 'utf-8')
     return content.trim()
   } catch {
@@ -51,11 +74,14 @@ export default async function NestedFolderPage({ params }: PageProps) {
   // Check if this path corresponds to a page route first
   const lastSegment = path[path.length - 1]
   
+  // Get project root for path resolution
+  const projectRoot = await getProjectRoot()
+  
   // Check if last segment is "preface" - this is a preface/page.tsx route
   if (lastSegment === 'preface') {
     const parentPath = path.length > 1 
-      ? join(process.cwd(), 'app', section, ...path.slice(0, -1))
-      : join(process.cwd(), 'app', section)
+      ? join(projectRoot, 'app', section, ...path.slice(0, -1))
+      : join(projectRoot, 'app', section)
     const prefacePagePath = join(parentPath, 'preface', 'page.tsx')
     try {
       await stat(prefacePagePath)
@@ -68,7 +94,7 @@ export default async function NestedFolderPage({ params }: PageProps) {
   }
   
   // Check if there's a page.tsx directly at this path
-  const pagePath = join(process.cwd(), 'app', section, ...path, 'page.tsx')
+  const pagePath = join(projectRoot, 'app', section, ...path, 'page.tsx')
   try {
     await stat(pagePath)
     // This is a page route, not a folder - let Next.js handle it
@@ -79,7 +105,7 @@ export default async function NestedFolderPage({ params }: PageProps) {
   }
   
   // Check if the directory exists
-  const dirPath = join(process.cwd(), 'app', section, ...path)
+  const dirPath = join(projectRoot, 'app', section, ...path)
   console.log('[NestedFolderPage] Checking directory:', dirPath)
   try {
     const dirStat = await stat(dirPath)

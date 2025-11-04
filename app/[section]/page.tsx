@@ -20,10 +20,33 @@ export const revalidate = 0
 // Don't export generateStaticParams - this forces Next.js to render on-demand
 // If we export it with an empty array, Next.js still tries to statically generate
 
+// Get the project root (same logic as getFolderContents)
+async function getProjectRoot(): Promise<string> {
+  const { stat } = await import('fs/promises')
+  const { resolve, join } = await import('path')
+  const cwd = process.cwd()
+  
+  if (cwd.includes('.next')) {
+    return resolve(cwd, '..')
+  }
+  
+  const possibleRoots = [cwd, resolve(cwd, '..'), resolve(cwd, '../..'), resolve(cwd, '../../..')]
+  for (const root of possibleRoots) {
+    try {
+      await stat(join(root, 'app'))
+      return root
+    } catch {
+      continue
+    }
+  }
+  return cwd
+}
+
 // Get folder description from a description.md file if it exists
 async function getFolderDescription(section: string): Promise<string | null> {
   try {
-    const descPath = join(process.cwd(), 'app', section, 'description.md')
+    const projectRoot = await getProjectRoot()
+    const descPath = join(projectRoot, 'app', section, 'description.md')
     const content = await readFile(descPath, 'utf-8')
     return content.trim()
   } catch {

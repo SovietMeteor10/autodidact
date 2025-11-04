@@ -9,7 +9,7 @@ export interface FolderItem {
 }
 
 // Get the project root - try multiple possible locations
-function getProjectRoot(): string {
+async function getProjectRoot(): Promise<string> {
   const cwd = process.cwd()
   console.log('[getProjectRoot] process.cwd():', cwd)
   
@@ -20,30 +20,33 @@ function getProjectRoot(): string {
     return root
   }
   
-  // If we're in a standalone build, the app might be in a different location
-  // Try to find the app directory
+  // In production, try to find the app directory by checking if it exists
   const possibleRoots = [
     cwd,
     resolve(cwd, '..'),
     resolve(cwd, '../..'),
+    resolve(cwd, '../../..'),
   ]
   
+  // Check each possible root to see if the app directory exists
   for (const root of possibleRoots) {
     try {
       const appPath = join(root, 'app')
-      // Check if app directory exists (this is async, but we'll handle it in the caller)
+      await stat(appPath)
+      console.log('[getProjectRoot] Found app directory at:', root)
       return root
     } catch {
       continue
     }
   }
   
+  console.log('[getProjectRoot] Could not find app directory, using cwd:', cwd)
   return cwd
 }
 
 export async function getFolderContents(folderPath: string): Promise<FolderItem[]> {
   try {
-    const projectRoot = getProjectRoot()
+    const projectRoot = await getProjectRoot()
     const fullPath = join(projectRoot, 'app', folderPath)
     console.log('[getFolderContents] Reading folder:', fullPath)
     console.log('[getFolderContents] projectRoot:', projectRoot)
@@ -133,8 +136,12 @@ export async function getFolderContents(folderPath: string): Promise<FolderItem[
     })
   } catch (error) {
     console.error('[getFolderContents] Error reading folder:', folderPath)
-    const projectRoot = getProjectRoot()
-    console.error('[getFolderContents] Full path attempted:', join(projectRoot, 'app', folderPath))
+    try {
+      const projectRoot = await getProjectRoot()
+      console.error('[getFolderContents] Full path attempted:', join(projectRoot, 'app', folderPath))
+    } catch {
+      console.error('[getFolderContents] Could not determine project root')
+    }
     console.error('[getFolderContents] Error details:', error)
     if (error instanceof Error) {
       console.error('[getFolderContents] Error message:', error.message)
