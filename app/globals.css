@@ -57,7 +57,7 @@ a {
 }
 
 /* Back button positioning - in left margin on desktop, above title on mobile */
-@media (min-width: 800px) {
+@media (min-width: 1500px) {
   .back-button {
     position: absolute !important;
     left: -5rem !important;
@@ -66,7 +66,7 @@ a {
   }
 }
 
-@media (max-width: 799px) {
+@media (max-width: 1499px) {
   .back-button {
     position: relative !important;
     left: auto !important;
