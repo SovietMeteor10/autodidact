@@ -1,0 +1,116 @@
+{
+  "sections": {
+    "about": {
+      "contents": [
+        {
+          "name": "preface",
+          "path": "/about/preface",
+          "isFolder": false
+        }
+      ],
+      "description": null
+    },
+    "architecture": {
+      "contents": [
+        {
+          "name": "preface",
+          "path": "/architecture/preface",
+          "isFolder": false
+        }
+      ],
+      "description": null
+    },
+    "economics": {
+      "contents": [
+        {
+          "name": "preface",
+          "path": "/economics/preface",
+          "isFolder": false
+        }
+      ],
+      "description": null
+    },
+    "film": {
+      "contents": [
+        {
+          "name": "preface",
+          "path": "/film/preface",
+          "isFolder": false
+        }
+      ],
+      "description": null
+    },
+    "history": {
+      "contents": [
+        {
+          "name": "preface",
+          "path": "/history/preface",
+          "isFolder": false
+        }
+      ],
+      "description": null
+    },
+    "music": {
+      "contents": [
+        {
+          "name": "preface",
+          "path": "/music/preface",
+          "isFolder": false
+        }
+      ],
+      "description": null
+    },
+    "notes": {
+      "contents": [
+        {
+          "name": "example",
+          "path": "/notes/example",
+          "isFolder": false
+        }
+      ],
+      "description": null
+    },
+    "philosophy": {
+      "contents": [
+        {
+          "name": "preface",
+          "path": "/philosophy/preface",
+          "isFolder": false
+        }
+      ],
+      "description": null
+    },
+    "politics": {
+      "contents": [
+        {
+          "name": "preface",
+          "path": "/politics/preface",
+          "isFolder": false
+        }
+      ],
+      "description": null
+    },
+    "subjects": {
+      "contents": [
+        {
+          "name": "example",
+          "path": "/subjects/example",
+          "isFolder": false
+        }
+      ],
+      "description": null
+    },
+    "theology": {
+      "contents": [
+        {
+          "name": "preface",
+          "path": "/theology/preface",
+          "isFolder": false
+        }
+      ],
+      "description": null
+    }
+  },
+  "nestedPaths": {},
+  "generatedAt": "2025-11-04T09:19:13.917Z"
+}
