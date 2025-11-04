@@ -97,11 +97,12 @@ export default function FolderView({ title, description, parentPath, contents, f
         justifyContent: 'space-between',
         alignItems: 'baseline',
         marginBottom: '1.5rem',
-        gap: '1rem'
+        gap: '1rem',
+        flexWrap: 'wrap'
       }}>
         <h1 className="page-title" style={{ fontSize: '2.5rem', margin: 0 }}>{title.toLowerCase()}</h1>
         {filePath && (
-          <div style={{ flex: '0 0 auto', flexShrink: 0 }}>
+          <div style={{ flex: '0 0 auto', minWidth: 0 }}>
             <FilePathSegments filePath={filePath} />
           </div>
         )}
@@ -116,7 +117,7 @@ export default function FolderView({ title, description, parentPath, contents, f
       
       {/* Tree view of folder contents */}
       {contents.length > 0 && (
-        <div style={{ marginTop: '2rem', fontFamily: 'monospace', lineHeight: '1.8', fontSize: '1.2rem' }}>
+        <div data-tree-view style={{ marginTop: '2rem', fontFamily: 'monospace', lineHeight: '1.8', fontSize: '1.2rem' }}>
           {contents.map((node, index) => {
             const isLast = index === contents.length - 1
             return renderTreeNode(node, isLast, 0)

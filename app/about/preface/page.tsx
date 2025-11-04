@@ -25,10 +25,12 @@ export default function AboutPreface() {
         justifyContent: 'space-between',
         alignItems: 'baseline',
         marginBottom: '1.5rem',
-        gap: '1rem'
+        gap: '1rem',
+        flexWrap: 'wrap',
+        flexWrap: 'wrap'
       }}>
         <h1 className="page-title" style={{ fontSize: '2.5rem', margin: 0 }}>preface</h1>
-        <div style={{ flex: '0 0 auto', flexShrink: 0 }}>
+        <div style={{ flex: '0 0 auto', minWidth: 0 }}>
           <FilePathSegments filePath={filePath} />
         </div>
       </div>

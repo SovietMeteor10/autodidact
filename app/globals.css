@@ -77,3 +77,31 @@ a {
   }
 }
 
+/* Responsive text sizes for mobile */
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 1.75rem !important;
+  }
+  
+  /* Adjust main padding on mobile */
+  main {
+    padding: 1rem !important;
+  }
+  
+  /* Smaller file path on mobile */
+  [data-file-path] {
+    font-size: 0.75rem !important;
+  }
+  
+  /* Smaller tree view text on mobile */
+  [data-tree-view] {
+    font-size: 1rem !important;
+  }
+  
+  /* Smaller body text on mobile */
+  article p,
+  p[style*="fontSize"] {
+    font-size: 1rem !important;
+  }
+}
+

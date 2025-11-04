@@ -14,12 +14,15 @@ export default function FilePathSegments({ filePath }: { filePath: string }) {
   }
   
   return (
-    <div style={{
+    <div data-file-path style={{
       color: '#999',
       fontSize: '0.9rem',
       fontFamily: 'monospace',
       display: 'flex',
-      alignItems: 'center'
+      alignItems: 'center',
+      flexWrap: 'wrap',
+      gap: '0.25rem',
+      wordBreak: 'break-all'
     }}>
       <span style={{ color: '#999' }}>./</span>
       {segments.map((segment, index) => (
