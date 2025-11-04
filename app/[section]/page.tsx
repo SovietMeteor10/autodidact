@@ -15,6 +15,12 @@ interface PageProps {
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 export const dynamicParams = true
+export const revalidate = 0
+
+// Explicitly prevent static generation - return empty array to force all routes to be dynamic
+export async function generateStaticParams() {
+  return []
+}
 
 // Get folder description from a description.md file if it exists
 async function getFolderDescription(section: string): Promise<string | null> {
@@ -34,12 +40,21 @@ export default async function SectionPage({ params }: PageProps) {
   console.log('[SectionPage] process.cwd():', process.cwd())
   
   // Get the folder contents
-  const contents = await getFolderContents(section)
-  console.log('[SectionPage] Found contents:', contents.length, 'items')
+  let contents
+  try {
+    contents = await getFolderContents(section)
+    console.log('[SectionPage] Found contents:', contents.length, 'items')
+  } catch (error) {
+    console.error('[SectionPage] Error getting folder contents:', error)
+    notFound()
+    return
+  }
   
   // If no contents, this might not be a valid folder
   if (contents.length === 0) {
+    console.log('[SectionPage] No contents found, calling notFound()')
     notFound()
+    return
   }
   
   // Get description if available

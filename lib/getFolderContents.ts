@@ -1,5 +1,5 @@
 import { readdir, stat } from 'fs/promises'
-import { join } from 'path'
+import { join, resolve } from 'path'
 
 export interface FolderItem {
   name: string
@@ -8,10 +8,57 @@ export interface FolderItem {
   children?: FolderItem[]
 }
 
+// Get the project root - try multiple possible locations
+function getProjectRoot(): string {
+  const cwd = process.cwd()
+  console.log('[getProjectRoot] process.cwd():', cwd)
+  
+  // If we're in .next directory, go up one level
+  if (cwd.includes('.next')) {
+    const root = resolve(cwd, '..')
+    console.log('[getProjectRoot] Adjusted from .next:', root)
+    return root
+  }
+  
+  // If we're in a standalone build, the app might be in a different location
+  // Try to find the app directory
+  const possibleRoots = [
+    cwd,
+    resolve(cwd, '..'),
+    resolve(cwd, '../..'),
+  ]
+  
+  for (const root of possibleRoots) {
+    try {
+      const appPath = join(root, 'app')
+      // Check if app directory exists (this is async, but we'll handle it in the caller)
+      return root
+    } catch {
+      continue
+    }
+  }
+  
+  return cwd
+}
+
 export async function getFolderContents(folderPath: string): Promise<FolderItem[]> {
   try {
-    const fullPath = join(process.cwd(), 'app', folderPath)
+    const projectRoot = getProjectRoot()
+    const fullPath = join(projectRoot, 'app', folderPath)
+    console.log('[getFolderContents] Reading folder:', fullPath)
+    console.log('[getFolderContents] projectRoot:', projectRoot)
+    console.log('[getFolderContents] process.cwd():', process.cwd())
+    
+    // Verify the directory exists before trying to read it
+    try {
+      await stat(fullPath)
+    } catch (error) {
+      console.error('[getFolderContents] Directory does not exist:', fullPath)
+      throw error
+    }
+    
     const entries = await readdir(fullPath)
+    console.log('[getFolderContents] Found entries:', entries.length)
     
     const items: FolderItem[] = []
     
@@ -85,7 +132,14 @@ export async function getFolderContents(folderPath: string): Promise<FolderItem[
       return a.name.localeCompare(b.name)
     })
   } catch (error) {
-    console.error('Error reading folder:', error)
+    console.error('[getFolderContents] Error reading folder:', folderPath)
+    const projectRoot = getProjectRoot()
+    console.error('[getFolderContents] Full path attempted:', join(projectRoot, 'app', folderPath))
+    console.error('[getFolderContents] Error details:', error)
+    if (error instanceof Error) {
+      console.error('[getFolderContents] Error message:', error.message)
+      console.error('[getFolderContents] Error stack:', error.stack)
+    }
     return []
   }
 }

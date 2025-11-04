@@ -15,6 +15,12 @@ interface PageProps {
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 export const dynamicParams = true
+export const revalidate = 0
+
+// Explicitly prevent static generation - return empty array to force all routes to be dynamic
+export async function generateStaticParams() {
+  return []
+}
 
 // Get folder description from a description.md file if it exists
 async function getFolderDescription(folderPath: string): Promise<string | null> {
@@ -76,24 +82,39 @@ export default async function NestedFolderPage({ params }: PageProps) {
   
   // Check if the directory exists
   const dirPath = join(process.cwd(), 'app', section, ...path)
+  console.log('[NestedFolderPage] Checking directory:', dirPath)
   try {
     const dirStat = await stat(dirPath)
     if (!dirStat.isDirectory()) {
+      console.log('[NestedFolderPage] Path exists but is not a directory')
       notFound()
       return
     }
-  } catch {
+    console.log('[NestedFolderPage] Directory exists, reading contents')
+  } catch (error) {
     // Directory doesn't exist
+    console.error('[NestedFolderPage] Directory does not exist:', dirPath)
+    console.error('[NestedFolderPage] Error:', error)
     notFound()
     return
   }
   
   // Get the folder contents
-  const contents = await getFolderContents(folderPath)
+  let contents
+  try {
+    contents = await getFolderContents(folderPath)
+    console.log('[NestedFolderPage] Got contents:', contents.length, 'items')
+  } catch (error) {
+    console.error('[NestedFolderPage] Error getting folder contents:', error)
+    notFound()
+    return
+  }
   
   // If no contents, this might not be a valid folder
   if (contents.length === 0) {
+    console.log('[NestedFolderPage] No contents found, calling notFound()')
     notFound()
+    return
   }
   
   // Get description if available
