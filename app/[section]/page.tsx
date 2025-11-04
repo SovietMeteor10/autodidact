@@ -17,10 +17,8 @@ export const runtime = 'nodejs'
 export const dynamicParams = true
 export const revalidate = 0
 
-// Explicitly prevent static generation - return empty array to force all routes to be dynamic
-export async function generateStaticParams() {
-  return []
-}
+// Don't export generateStaticParams - this forces Next.js to render on-demand
+// If we export it with an empty array, Next.js still tries to statically generate
 
 // Get folder description from a description.md file if it exists
 async function getFolderDescription(section: string): Promise<string | null> {
