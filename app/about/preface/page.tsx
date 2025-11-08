@@ -26,7 +26,6 @@ export default function AboutPreface() {
         alignItems: 'baseline',
         marginBottom: '1.5rem',
         gap: '1rem',
-        flexWrap: 'wrap',
         flexWrap: 'wrap'
       }}>
         <h1 className="page-title" style={{ fontSize: '2.5rem', margin: 0 }}>preface</h1>
