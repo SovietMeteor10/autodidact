@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { auth } from './auth'
 
 /**
  * Middleware configuration
  * Protects admin routes and API endpoints
+ * 
+ * NOTE: This middleware only checks for auth cookies to keep bundle size small.
+ * Actual session validation happens in server components using auth().
  */
 export const config = {
   matcher: [
@@ -15,8 +17,9 @@ export const config = {
 
 /**
  * Middleware to protect admin routes
+ * Uses lightweight cookie check to avoid importing Prisma/NextAuth (keeps bundle < 1MB)
  */
-export async function middleware(req: NextRequest) {
+export function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname
 
   // Allow access to login page and auth API routes without authentication
@@ -29,10 +32,14 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
-  // Check if user is authenticated using NextAuth
-  const session = await auth()
+  // Check for NextAuth session token cookie (lightweight check)
+  // NextAuth sets these cookies automatically on successful login
+  const sessionToken = req.cookies.get('next-auth.session-token') 
+    || req.cookies.get('__Secure-next-auth.session-token')
+    || req.cookies.get('authjs.session-token')
+    || req.cookies.get('__Secure-authjs.session-token')
 
-  if (!session?.user) {
+  if (!sessionToken) {
     // For API routes, return 401
     if (pathname.startsWith('/api/')) {
       return NextResponse.json(

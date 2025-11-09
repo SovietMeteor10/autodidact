@@ -1,9 +1,17 @@
 import { prisma } from '@/lib/db'
+import { auth } from '@/auth'
+import { redirect } from 'next/navigation'
 
 // Mark page as dynamic to prevent static generation
 export const dynamic = 'force-dynamic'
 
 export default async function AdminDashboard() {
+  // Verify authentication in server component (can use Prisma/NextAuth here)
+  const session = await auth()
+  
+  if (!session?.user) {
+    redirect('/login?from=/admin')
+  }
   // Fetch only root nodes with their child count
   const rootNodes = await prisma.node.findMany({
     where: { parentId: null },
