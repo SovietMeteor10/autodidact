@@ -33,30 +33,29 @@ async function findNodeByPath(segments: string[]) {
   });
 }
 
-// Recursively build tree structure from database nodes
-function buildTreeFromNodes(
-  nodes: Array<{ id: string; title: string; slug: string; path: string; parentId: string | null; order: number; children: any[] }>,
-  parentId: string | null = null
+// Convert Prisma node children structure to TreeNode format
+// This recursively converts the nested children structure from the database query
+function convertNodeChildrenToTree(
+  children: Array<{
+    id: string;
+    title: string;
+    path: string;
+    children: any[];
+  }>
 ): TreeNode[] {
-  return nodes
-    .filter(node => {
-      if (parentId === null || parentId === undefined) {
-        return node.parentId === null || node.parentId === undefined
-      }
-      return String(node.parentId) === String(parentId)
-    })
-    .sort((a, b) => a.order - b.order)
-    .map(node => {
-      const children = buildTreeFromNodes(nodes, node.id)
-      const result: TreeNode = {
-        name: node.title,
-        path: node.path,
-      }
-      if (children.length > 0) {
-        result.children = children
-      }
-      return result
-    })
+  return children.map(child => {
+    const result: TreeNode = {
+      name: child.title,
+      path: child.path,
+    };
+    
+    // Recursively convert nested children if they exist
+    if (child.children && Array.isArray(child.children) && child.children.length > 0) {
+      result.children = convertNodeChildrenToTree(child.children);
+    }
+    
+    return result;
+  });
 }
 
 export default async function Page({ params }: { params: { path?: string[] } }) {
@@ -91,23 +90,11 @@ export default async function Page({ params }: { params: { path?: string[] } }) 
     orderBy: { name: 'asc' },
   });
 
-  // Get all nodes to build complete tree structure
-  const allNodes = await prisma.node.findMany({
-    select: {
-      id: true,
-      title: true,
-      slug: true,
-      path: true,
-      parentId: true,
-      order: true,
-    },
-    orderBy: { order: 'asc' },
-  })
-
-  // Build tree structure from children (with nested children)
-  // Add children property to nodes for buildTreeFromNodes
-  const nodesWithChildren = allNodes.map(n => ({ ...n, children: [] as any[] })) as any[]
-  const treeNodes = buildTreeFromNodes(nodesWithChildren)
+  // Convert current node's children to tree structure
+  // node.children is already fetched with nested structure via the include clause
+  const treeNodes = node.children && node.children.length > 0
+    ? convertNodeChildrenToTree(node.children)
+    : []
 
   // Determine content type: string (plain text) or array (JSON blocks)
   const isPlainText = typeof node.content === 'string';
@@ -176,7 +163,7 @@ export default async function Page({ params }: { params: { path?: string[] } }) 
       
       // For leaf pages (pages without children), filter out ANY heading with a separator
       // This removes duplicate headings like "Theology – Preface", "Philosophy – Preface", etc.
-      const isLeafPage = treeNodes.length === 0
+      const isLeafPage = !node.children || node.children.length === 0
       const hasSeparator = /[–—-]/.test(headingText)
       
       if (hasSeparator) {
@@ -264,7 +251,8 @@ export default async function Page({ params }: { params: { path?: string[] } }) 
       )}
 
       {/* Sections with tree structure - no "Sections" heading, just the tree */}
-      {treeNodes.length > 0 && (
+      {/* Only show tree if current node has children */}
+      {node.children && node.children.length > 0 && (
         <div style={{ marginTop: '2rem' }}>
           <FolderTree nodes={treeNodes} />
         </div>

@@ -8,22 +8,25 @@ import bcrypt from "bcryptjs"
 import NextAuth from "next-auth"
 import type { PrismaClient } from "@prisma/client"
 
-// Type assertion to ensure User model is available
-// This is needed because Prisma client types may not be fully generated during build
-const typedPrisma = prisma as PrismaClient & {
-  user: {
-    findUnique: (args: { where: { email: string } }) => Promise<{
-      id: string
-      email: string | null
-      name: string | null
-      passwordHash: string | null
-    } | null>
+// Helper to safely access user model with detailed error reporting
+function getUserModel() {
+  const prismaModels = Object.keys(prisma).filter(k => !k.startsWith('$'))
+  
+  if (!prisma.user) {
+    const errorMsg = `Prisma client missing User model. Available models: ${prismaModels.join(', ')}. This means the Prisma client was not generated with the User model from schema.prisma. Check that prebuild script runs correctly.`
+    console.error('[AUTH ERROR]', errorMsg)
+    console.error('[AUTH ERROR] Prisma client type:', typeof prisma)
+    console.error('[AUTH ERROR] Prisma client keys:', Object.keys(prisma))
+    throw new Error(errorMsg)
   }
+  
+  return prisma.user
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma as any),
   session: { strategy: "jwt" },
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   providers: [
     Credentials({
       name: "Credentials",
@@ -33,26 +36,44 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
+          console.log('[AUTH DEBUG] Missing email or password')
           return null
         }
 
-        const user = await typedPrisma.user.findUnique({
-          where: { email: credentials.email as string }
+        // Normalize email to lowercase for case-insensitive matching
+        const email = (credentials.email as string).toLowerCase().trim()
+        const password = credentials.password as string
+
+        console.log('[AUTH DEBUG] Attempting login for email:', email)
+
+        // Get user model with runtime check
+        const userModel = getUserModel()
+        const user = await userModel.findUnique({
+          where: { email }
         })
 
-        if (!user || !user.passwordHash) {
+        if (!user) {
+          console.log('[AUTH DEBUG] User not found for email:', email)
           return null
         }
 
-        const valid = await bcrypt.compare(
-          credentials.password as string,
-          user.passwordHash
-        )
+        if (!user.passwordHash) {
+          console.log('[AUTH DEBUG] User found but has no passwordHash')
+          return null
+        }
+
+        console.log('[AUTH DEBUG] User found, comparing password...')
+        console.log('[AUTH DEBUG] Password hash exists:', !!user.passwordHash)
+        console.log('[AUTH DEBUG] Hash length:', user.passwordHash?.length)
+
+        const valid = await bcrypt.compare(password, user.passwordHash)
 
         if (!valid) {
+          console.log('[AUTH DEBUG] Password comparison failed')
           return null
         }
 
+        console.log('[AUTH DEBUG] Password valid, returning user')
         return {
           id: user.id,
           email: user.email,
