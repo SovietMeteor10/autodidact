@@ -9,10 +9,13 @@ import NextAuth from "next-auth"
 import type { PrismaClient } from "@prisma/client"
 
 // Helper to safely access user model with detailed error reporting
+// Uses type assertion to avoid TypeScript errors during build
 function getUserModel() {
+  // Type assertion to access user model (TypeScript may not see it during build)
+  const prismaWithUser = prisma as any
   const prismaModels = Object.keys(prisma).filter(k => !k.startsWith('$'))
   
-  if (!prisma.user) {
+  if (!prismaWithUser.user) {
     const errorMsg = `Prisma client missing User model. Available models: ${prismaModels.join(', ')}. This means the Prisma client was not generated with the User model from schema.prisma. Check that prebuild script runs correctly.`
     console.error('[AUTH ERROR]', errorMsg)
     console.error('[AUTH ERROR] Prisma client type:', typeof prisma)
@@ -20,7 +23,7 @@ function getUserModel() {
     throw new Error(errorMsg)
   }
   
-  return prisma.user
+  return prismaWithUser.user
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
