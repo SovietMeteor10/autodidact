@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
+// Mark route as dynamic
+export const dynamic = 'force-dynamic'
+
 /**
  * PUT /api/nodes/[id]/content
  * Update only the content blocks of a node

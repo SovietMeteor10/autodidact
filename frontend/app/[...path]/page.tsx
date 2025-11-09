@@ -258,7 +258,7 @@ export default async function Page({ params }: { params: { path?: string[] } }) 
       ) : (
         contentBlocksWithoutDescription.length > 0 && (
           <article style={{ marginTop: '1rem', lineHeight: '1.8' }}>
-            <ContentRenderer blocks={contentBlocksWithoutDescription} sources={sources} />
+            <ContentRenderer blocks={contentBlocksWithoutDescription as any} sources={sources} />
           </article>
         )
       )}

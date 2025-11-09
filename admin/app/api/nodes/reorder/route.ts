@@ -4,6 +4,9 @@ import { reorderNodesSchema } from '@/lib/zod-schemas'
 import { createErrorResponse, handleValidationError, handleUnknownError } from '@/lib/errors'
 import { ZodError } from 'zod'
 
+// Mark route as dynamic
+export const dynamic = 'force-dynamic'
+
 /**
  * POST /api/nodes/reorder
  * Reorder children of a parent node (for drag-and-drop)

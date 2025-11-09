@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { calculateNodePath } from '@/lib/nodeHelpers'
 
+// Mark route as dynamic
+export const dynamic = 'force-dynamic'
+
 /**
  * POST /api/nodes
  * Create a new node

@@ -5,6 +5,9 @@ import { updateNodeSchema } from '@/lib/zod-schemas'
 import { createErrorResponse, handleValidationError, handleUnknownError } from '@/lib/errors'
 import { ZodError } from 'zod'
 
+// Mark route as dynamic
+export const dynamic = 'force-dynamic'
+
 /**
  * POST /api/nodes/update
  * Update a node's metadata and/or content

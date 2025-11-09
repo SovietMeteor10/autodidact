@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { calculateNodePath, updateDescendantPaths } from '@/lib/nodeHelpers'
 
+// Mark route as dynamic
+export const dynamic = 'force-dynamic'
+
 /**
  * GET /api/nodes/[id]
  * Get a single node by ID

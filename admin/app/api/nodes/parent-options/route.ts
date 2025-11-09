@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
+// Mark route as dynamic
+export const dynamic = 'force-dynamic'
+
 /**
  * GET /api/nodes/parent-options
  * Get all nodes that can be parents (non-child nodes: top level and mid level)

@@ -4,6 +4,9 @@ import { getNodeSchema } from '@/lib/zod-schemas'
 import { createErrorResponse, handleValidationError, handleUnknownError } from '@/lib/errors'
 import { ZodError } from 'zod'
 
+// Mark route as dynamic
+export const dynamic = 'force-dynamic'
+
 /**
  * GET /api/nodes/get
  * Get a single node by ID or path

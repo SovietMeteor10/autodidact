@@ -3,6 +3,9 @@ import { prisma } from '@/lib/db'
 import { listNodesSchema } from '@/lib/zod-schemas'
 import { createErrorResponse, handleUnknownError } from '@/lib/errors'
 
+// Mark route as dynamic
+export const dynamic = 'force-dynamic'
+
 /**
  * GET /api/nodes/list
  * List all nodes or children of a specific parent

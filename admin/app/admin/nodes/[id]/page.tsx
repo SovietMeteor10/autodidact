@@ -6,6 +6,9 @@ import AdminBackButton from '@/components/AdminBackButton'
 import ChildNodeContentEditor from '@/components/ChildNodeContentEditor'
 import NodeSourcesList from '@/components/NodeSourcesList'
 
+// Mark page as dynamic to prevent static generation
+export const dynamic = 'force-dynamic'
+
 export default async function EditNodePage({ 
   params 
 }: { 

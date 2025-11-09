@@ -1,5 +1,8 @@
 import { prisma } from '@/lib/db'
 
+// Mark page as dynamic to prevent static generation
+export const dynamic = 'force-dynamic'
+
 export default async function AdminDashboard() {
   // Fetch only root nodes with their child count
   const rootNodes = await prisma.node.findMany({
