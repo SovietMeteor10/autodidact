@@ -13,6 +13,14 @@ import type { PrismaClient } from "@prisma/client"
 function getUserModel() {
   // Type assertion to access user model (TypeScript may not see it during build)
   const prismaWithUser = prisma as any
+  
+  // Check DATABASE_URL first
+  if (!process.env.DATABASE_URL) {
+    const errorMsg = 'DATABASE_URL environment variable is not set. Please configure it in Vercel environment variables.'
+    console.error('[AUTH ERROR]', errorMsg)
+    throw new Error(errorMsg)
+  }
+  
   const prismaModels = Object.keys(prisma).filter(k => !k.startsWith('$'))
   
   if (!prismaWithUser.user) {
