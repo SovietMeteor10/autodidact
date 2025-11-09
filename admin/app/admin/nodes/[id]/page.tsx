@@ -52,8 +52,11 @@ export default async function EditNodePage({
         initialSlug={node.slug}
         initialPath={node.path}
         initialDescription={
-          Array.isArray(node.content) 
-            ? node.content.find((block: any) => block.type === 'description' || (block.type === 'text' && block.isDescription))?.text || null
+          Array.isArray(node.content)
+            ? (() => {
+                const block = node.content.find((block: any) => block.type === 'description' || (block.type === 'text' && block.isDescription))
+                return block && typeof block === 'object' && 'text' in block ? (block as any).text : null
+              })()
             : null
         }
       />

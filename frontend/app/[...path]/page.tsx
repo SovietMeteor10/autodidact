@@ -105,7 +105,9 @@ export default async function Page({ params }: { params: { path?: string[] } }) 
   })
 
   // Build tree structure from children (with nested children)
-  const treeNodes = buildTreeFromNodes(allNodes, node.id)
+  // Add children property to nodes for buildTreeFromNodes
+  const nodesWithChildren = allNodes.map(n => ({ ...n, children: [] as any[] })) as any[]
+  const treeNodes = buildTreeFromNodes(nodesWithChildren)
 
   // Determine content type: string (plain text) or array (JSON blocks)
   const isPlainText = typeof node.content === 'string';
