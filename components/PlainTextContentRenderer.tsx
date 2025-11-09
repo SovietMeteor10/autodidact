@@ -53,7 +53,19 @@ export function PlainTextContentRenderer({
 
   // Group consecutive bullet points into lists
   const processedSegments = useMemo(() => {
-    const result: Array<{ type: string; content: any; isBulletList?: boolean; bullets?: string[] }> = []
+    const result: Array<{ 
+      type: string
+      content: any
+      isBulletList?: boolean
+      bullets?: string[]
+      headingText?: string
+      citationName?: string
+      embedUrl?: string
+      bulletText?: string
+      linkText?: string
+      linkUrl?: string
+      tagPath?: string
+    }> = []
     let currentBulletList: string[] = []
     
     for (let i = 0; i < parsed.segments.length; i++) {
