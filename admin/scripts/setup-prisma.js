@@ -13,7 +13,10 @@ const fs = require('fs')
 const adminDir = path.resolve(__dirname, '..')
 // Get root directory (one level up from admin)
 const rootDir = path.resolve(adminDir, '..')
-const schemaPath = path.join(rootDir, 'prisma', 'schema.prisma')
+// Try local schema first (for Vercel builds), then fall back to root schema
+const localSchemaPath = path.join(adminDir, 'prisma', 'schema.prisma')
+const rootSchemaPath = path.join(rootDir, 'prisma', 'schema.prisma')
+const schemaPath = fs.existsSync(localSchemaPath) ? localSchemaPath : rootSchemaPath
 
 console.log('[Prisma Setup] Admin directory:', adminDir)
 console.log('[Prisma Setup] Root directory:', rootDir)
