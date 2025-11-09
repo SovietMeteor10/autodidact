@@ -1,3 +1,6 @@
+// Force Node.js runtime (required for Prisma and bcrypt)
+export const runtime = "nodejs"
+
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/db"
 import Credentials from "next-auth/providers/credentials"
