@@ -3,9 +3,23 @@ import { prisma } from "@/lib/db"
 import Credentials from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 import NextAuth from "next-auth"
+import type { PrismaClient } from "@prisma/client"
+
+// Type assertion to ensure User model is available
+// This is needed because Prisma client types may not be fully generated during build
+const typedPrisma = prisma as PrismaClient & {
+  user: {
+    findUnique: (args: { where: { email: string } }) => Promise<{
+      id: string
+      email: string | null
+      name: string | null
+      passwordHash: string | null
+    } | null>
+  }
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(prisma as any),
   session: { strategy: "jwt" },
   providers: [
     Credentials({
@@ -19,7 +33,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null
         }
 
-        const user = await prisma.user.findUnique({
+        const user = await typedPrisma.user.findUnique({
           where: { email: credentials.email as string }
         })
 
