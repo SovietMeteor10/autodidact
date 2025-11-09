@@ -1,81 +1,107 @@
-# Curriculum and Notes
+# Autodidact CMS
 
-A Next.js website for compiling study resources and notes with a clean, minimal design.
-
-## Features
-
-- Black background with white text
-- Roboto Slab font for readability
-- Navigation arrows in the top left corner
-- Extensible page structure for organizing subjects and notes
-- Easy to add new pages and links
-
-## Getting Started
-
-First, install the dependencies:
-
-```bash
-npm install
-```
-
-Then, run the development server:
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-## Adding New Pages
-
-### Adding a New Subject
-
-Create a new folder in `app/subjects/`:
-
-```
-app/subjects/your-subject-name/page.tsx
-```
-
-### Adding New Notes
-
-Create a new folder in `app/notes/`:
-
-```
-app/notes/your-notes-name/page.tsx
-```
-
-### Linking Between Pages
-
-Use Next.js `Link` component to create links between pages:
-
-```tsx
-import Link from 'next/link'
-
-<Link href="/subjects/your-subject">Your Subject</Link>
-```
+A content management system with a database-driven public website and a separate admin dashboard.
 
 ## Project Structure
 
 ```
-.
-├── app/
-│   ├── layout.tsx          # Root layout with navigation
-│   ├── page.tsx            # Home page
-│   ├── globals.css         # Global styles
-│   ├── subjects/           # Subject pages
-│   └── notes/              # Notes pages
-├── components/
-│   └── Navigation.tsx      # Navigation arrows component
-└── package.json
+autodidact/
+├── prisma/          # Shared Prisma schema and migrations
+├── frontend/        # Public website (autodidact.fun)
+└── admin/          # Admin dashboard (admin.autodidact.fun)
 ```
 
-## Styling
+## Setup
 
-The site uses:
-- Black background (`#000000`)
-- White text (`#ffffff`)
-- Roboto Slab font from Google Fonts
-- Minimal, clean design
+### 1. Install Dependencies
 
-You can customize the styles in `app/globals.css` and individual page components.
+```bash
+# Install root dependencies (for Prisma)
+npm install
 
+# Install frontend dependencies
+cd frontend
+npm install
+
+# Install admin dependencies
+cd ../admin
+npm install
+```
+
+### 2. Database Setup
+
+Both projects share the same database. Set up your `.env` files:
+
+**`frontend/.env.local`:**
+```env
+DATABASE_URL="postgresql://..."
+```
+
+**`admin/.env.local`:**
+```env
+DATABASE_URL="postgresql://..."
+ALLOW_UNAUTHENTICATED="true"  # For development only
+```
+
+### 3. Generate Prisma Client
+
+From the root directory:
+
+```bash
+npx prisma generate
+```
+
+### 4. Run Migrations
+
+```bash
+npx prisma migrate dev
+```
+
+## Development
+
+### Frontend (Public Site)
+
+```bash
+cd frontend
+npm run dev
+```
+
+Visit: http://localhost:3000
+
+### Admin Dashboard
+
+```bash
+cd admin
+npm run dev
+```
+
+Visit: http://localhost:3000
+
+## Deployment
+
+### Frontend
+
+Deploy the `frontend/` directory to Vercel:
+- Domain: `autodidact.fun`
+- Environment: `DATABASE_URL`
+
+### Admin
+
+Deploy the `admin/` directory to Vercel:
+- Domain: `admin.autodidact.fun`
+- Environment: `DATABASE_URL`, `ALLOW_UNAUTHENTICATED` (or implement real auth)
+
+## Features
+
+- ✅ Database-driven dynamic routing
+- ✅ Admin API with validation
+- ✅ Type-safe with Zod
+- ✅ Shared Prisma schema
+- ✅ Separate deployments
+
+## Next Steps
+
+1. Implement real authentication in `admin/lib/auth.ts`
+2. Build admin UI components
+3. Add content editor
+4. Add drag-and-drop reordering

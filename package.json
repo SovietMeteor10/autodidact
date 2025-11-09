@@ -1,29 +1,21 @@
 {
-  "name": "curriculum-notes",
+  "name": "autodidact",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "prebuild": "tsx scripts/generateFolderStructure.ts",
-    "build": "next build",
-    "postbuild": "mkdir -p .next/lib && cp lib/folderStructure.json .next/lib/folderStructure.json",
-    "start": "next start",
-    "lint": "next lint"
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:admin": "cd admin && npm run dev",
+    "build:frontend": "cd frontend && npm run build",
+    "build:admin": "cd admin && npm run build",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",
-    "next": "^14.0.0",
-    "prisma": "^6.19.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "prisma": "^6.19.0"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
-    "eslint": "^8.0.0",
-    "eslint-config-next": "^14.0.0",
-    "tsx": "^4.20.6",
     "typescript": "^5.0.0"
   }
 }

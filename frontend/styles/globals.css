@@ -1,0 +1,26 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+body {
+  font-family: var(--font-roboto-slab), serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Back button positioning - above title on folder pages */
+.back-button {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+  margin-bottom: 1rem;
+  display: block;
+}
+

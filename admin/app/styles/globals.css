@@ -1,0 +1,65 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+body {
+  font-family: var(--font-roboto-slab), serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Link styles */
+a {
+  color: #ffffff;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+a:hover {
+  opacity: 0.7;
+}
+
+/* Button styles */
+button, .button {
+  background-color: #ffffff;
+  color: #000000;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--font-roboto-slab), serif;
+  font-size: 1rem;
+  transition: opacity 0.2s ease, transform 0.1s ease;
+}
+
+button:hover, .button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+button:active, .button:active {
+  transform: translateY(0);
+}
+
+/* Input styles */
+input, textarea, select {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  border: 1px solid #333;
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-family: var(--font-roboto-slab), serif;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: #ffffff;
+}
+

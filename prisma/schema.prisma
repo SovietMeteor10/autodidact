@@ -12,13 +12,27 @@ model Node {
   title     String
   slug      String
   parentId  String?
+  path      String   @unique
   content   Json?
   order     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   parent    Node?    @relation("NodeToChildren", fields: [parentId], references: [id])
   children  Node[]   @relation("NodeToChildren")
 
   @@unique([slug, parentId])
   @@index([parentId])
+  @@index([slug, parentId])
+  @@index([path])
+}
+
+model Source {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  link      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
 }

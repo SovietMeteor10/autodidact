@@ -1,109 +1,108 @@
-import FileTree from '@/components/FileTree'
+import { prisma } from '@/lib/db'
+import HomeTree from '@/components/HomeTree'
 
-export default function Home() {
-  const treeStructure = {
+interface TreeNode {
+  name: string
+  path: string
+  children?: TreeNode[]
+}
+
+// Recursively build tree structure from database nodes
+// This checks the database by looking at parentId relationships
+function buildTree(
+  nodes: Array<{ id: string; title: string; slug: string; path: string; parentId: string | null; order: number }>,
+  parentId: string | null = null
+): TreeNode[] {
+  // Handle null comparison explicitly and ensure string comparison works
+  const matchingNodes = nodes.filter(node => {
+    if (parentId === null || parentId === undefined) {
+      return node.parentId === null || node.parentId === undefined
+    }
+    // Ensure both are strings and compare
+    return String(node.parentId) === String(parentId)
+  })
+  
+  // Sort: "about" first, then alphabetical by title
+  const sortedNodes = matchingNodes.sort((a, b) => {
+    const aTitle = a.title.toLowerCase()
+    const bTitle = b.title.toLowerCase()
+    
+    // Put "about" at the top
+    if (aTitle === 'about' && bTitle !== 'about') return -1
+    if (bTitle === 'about' && aTitle !== 'about') return 1
+    
+    // Then sort alphabetically
+    return aTitle.localeCompare(bTitle)
+  })
+  
+  return sortedNodes
+    .map(node => {
+      // Recursively find all children of this node by checking parentId
+      const children = buildTree(nodes, node.id)
+      const result: TreeNode = {
+        name: node.title,
+        path: node.path,
+      }
+      // Explicitly add children if they exist
+      if (children.length > 0) {
+        result.children = children
+      }
+      
+      // Debug logging for nodes with expected children
+      if (process.env.NODE_ENV === 'development') {
+        const childCount = nodes.filter(n => n.parentId === node.id).length
+        if (childCount > 0 && children.length === 0) {
+          console.warn(`Node "${node.title}" (id: ${node.id}) has ${childCount} children in DB but 0 in tree. parentId values:`, 
+            nodes.filter(n => n.parentId === node.id).map(n => ({ title: n.title, parentId: n.parentId, id: n.id })))
+        }
+      }
+      
+      return result
+    })
+}
+
+export default async function Home() {
+  // Fetch ALL nodes from database (no include needed - we'll check parentId relationships)
+  const allNodes = await prisma.node.findMany({
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      path: true,
+      parentId: true,
+      order: true,
+    },
+    orderBy: { order: 'asc' },
+  })
+
+  // Build tree structure starting from root nodes (parentId is null)
+  // This will recursively check the database relationships to find all children
+  const rootNodes = buildTree(allNodes, null)
+
+  // Create root node "Autodidacticism" with all root nodes as children
+  const rootTree: TreeNode = {
     name: 'Autodidacticism',
     path: '/',
-    children: [
-      {
-        name: 'About',
-        path: '/about',
-        children: [
-          {
-            name: 'preface',
-            path: '/about/preface',
-          },
-        ],
-      },
-      {
-        name: 'Architecture',
-        path: '/architecture',
-        children: [
-          {
-            name: 'preface',
-            path: '/architecture/preface',
-          },
-        ],
-      },
-      {
-        name: 'Economics',
-        path: '/economics',
-        children: [
-          {
-            name: 'preface',
-            path: '/economics/preface',
-          },
-        ],
-      },
-      {
-        name: 'Film',
-        path: '/film',
-        children: [
-          {
-            name: 'preface',
-            path: '/film/preface',
-          },
-        ],
-      },
-      {
-        name: 'History',
-        path: '/history',
-        children: [
-          {
-            name: 'preface',
-            path: '/history/preface',
-          },
-        ],
-      },
-      {
-        name: 'Music',
-        path: '/music',
-        children: [
-          {
-            name: 'preface',
-            path: '/music/preface',
-          },
-        ],
-      },
-      {
-        name: 'Philosophy',
-        path: '/philosophy',
-        children: [
-          {
-            name: 'preface',
-            path: '/philosophy/preface',
-          },
-        ],
-      },
-      {
-        name: 'Politics',
-        path: '/politics',
-        children: [
-          {
-            name: 'preface',
-            path: '/politics/preface',
-          },
-        ],
-      },
-      {
-        name: 'Theology',
-        path: '/theology',
-        children: [
-          {
-            name: 'preface',
-            path: '/theology/preface',
-          },
-        ],
-      },
-    ],
+    children: rootNodes,
+  }
+
+  // Debug: Log the tree structure and verify children are included
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Total nodes fetched:', allNodes.length)
+    console.log('Root nodes (parentId=null):', allNodes.filter(n => n.parentId === null).map(n => n.title))
+    console.log('Nodes with children:', allNodes.map(n => ({
+      title: n.title,
+      id: n.id,
+      childCount: allNodes.filter(child => child.parentId === n.id).length
+    })).filter(n => n.childCount > 0))
+    console.log('Root tree structure:', JSON.stringify(rootTree, null, 2))
   }
 
   return (
     <main style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ marginTop: '1.5rem' }}>
-        <FileTree root={treeStructure} />
+        <HomeTree nodes={[rootTree]} />
       </div>
     </main>
   )
 }
-

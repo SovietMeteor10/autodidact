@@ -32,20 +32,11 @@ a {
   opacity: 0.7;
 }
 
-/* FileTree arrow visibility */
-@media (min-width: 800px) {
-  .tree-arrow {
-    display: none !important;
-  }
-  .tree-node:hover .tree-arrow {
-    display: block !important;
-  }
-}
-
-@media (max-width: 799px) {
+/* FileTree arrow visibility - always visible */
   .tree-arrow {
     display: block !important;
-  }
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .folder-link {

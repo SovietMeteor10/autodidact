@@ -1,5 +1,5 @@
-import Link from 'next/link'
 import FilePathSegments from '@/components/FilePathSegments'
+import BackButton from '@/components/BackButton'
 
 interface PageProps {
   params: {
@@ -14,17 +14,7 @@ export default function PrefacePage({ params }: PageProps) {
   return (
     <main style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto', position: 'relative' }}>
       {/* Back button in left margin (desktop) or above title (mobile) */}
-      <Link
-        href={`/${section}`}
-        className="folder-link back-button"
-        style={{
-          color: '#ffffff',
-          textDecoration: 'none',
-          whiteSpace: 'nowrap'
-        }}
-      >
-        ← Back
-      </Link>
+      <BackButton />
       
       {/* Header with title and file path */}
       <div style={{
