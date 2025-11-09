@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { parseContent } from '@/lib/contentParser'
+import { parseContent, ParsedContentSegment } from '@/lib/contentParser'
 import { numberCitations } from '@/lib/citationNumberer'
 import { getEmbedUrl } from '@/lib/videoEmbed'
 
@@ -14,6 +14,14 @@ interface Source {
 interface PlainTextContentRendererProps {
   content: string
   sources: Source[]
+}
+
+// Union type for processed segments (includes bullet-list variant)
+type ProcessedSegment = ParsedContentSegment | {
+  type: 'bullet-list'
+  content: null
+  isBulletList: true
+  bullets: string[]
 }
 
 export function PlainTextContentRenderer({
@@ -53,19 +61,7 @@ export function PlainTextContentRenderer({
 
   // Group consecutive bullet points into lists
   const processedSegments = useMemo(() => {
-    const result: Array<{ 
-      type: string
-      content: any
-      isBulletList?: boolean
-      bullets?: string[]
-      headingText?: string
-      citationName?: string
-      embedUrl?: string
-      bulletText?: string
-      linkText?: string
-      linkUrl?: string
-      tagPath?: string
-    }> = []
+    const result: ProcessedSegment[] = []
     let currentBulletList: string[] = []
     
     for (let i = 0; i < parsed.segments.length; i++) {
@@ -146,7 +142,7 @@ export function PlainTextContentRenderer({
                 {segment.headingText}
               </h3>
             )
-          } else if (segment.isBulletList && segment.bullets) {
+          } else if (segment.type === 'bullet-list' && 'bullets' in segment) {
             return (
               <ul
                 key={index}
