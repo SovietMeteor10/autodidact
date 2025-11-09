@@ -4,11 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "prisma generate --schema=../prisma/schema.prisma",
+    "postinstall": "node scripts/setup-prisma.js",
+    "prebuild": "node scripts/setup-prisma.js",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "postinstall": "prisma generate --schema=../prisma/schema.prisma && mkdir -p node_modules/.prisma && ROOT_DIR=$(cd .. && pwd) && ln -sf \"$ROOT_DIR/node_modules/.prisma/client\" node_modules/.prisma/client || true"
+    "lint": "next lint"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.0",
