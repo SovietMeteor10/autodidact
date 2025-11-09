@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getSession } from './lib/auth'
+import { auth } from './auth'
 
 /**
  * Middleware configuration
@@ -17,17 +17,24 @@ export const config = {
  * Middleware to protect admin routes
  */
 export async function middleware(req: NextRequest) {
-  const session = await getSession(req)
+  const pathname = req.nextUrl.pathname
+
+  // Allow access to login page and auth API routes without authentication
+  if (pathname === '/login' || pathname.startsWith('/api/auth/')) {
+    return NextResponse.next()
+  }
 
   // Allow unauthenticated access in development if explicitly enabled
   if (process.env.NODE_ENV === 'development' && process.env.ALLOW_UNAUTHENTICATED === 'true') {
     return NextResponse.next()
   }
 
-  // Check if user is authenticated
+  // Check if user is authenticated using NextAuth
+  const session = await auth()
+
   if (!session?.user) {
     // For API routes, return 401
-    if (req.nextUrl.pathname.startsWith('/api/')) {
+    if (pathname.startsWith('/api/')) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -35,8 +42,8 @@ export async function middleware(req: NextRequest) {
     }
 
     // For admin pages, redirect to login
-    const loginUrl = new URL('/admin/login', req.url)
-    loginUrl.searchParams.set('from', req.nextUrl.pathname)
+    const loginUrl = new URL('/login', req.url)
+    loginUrl.searchParams.set('from', pathname)
     return NextResponse.redirect(loginUrl)
   }
 

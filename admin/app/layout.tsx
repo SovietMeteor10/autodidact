@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Roboto_Slab } from 'next/font/google'
+import Providers from '@/components/Providers'
 import './styles/globals.css'
 
 const robotoSlab = Roboto_Slab({
@@ -21,7 +22,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={robotoSlab.variable}>
       <body style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   )

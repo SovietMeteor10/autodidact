@@ -1,8 +1,22 @@
 'use client'
 
 import Link from 'next/link'
+import { signOut } from 'next-auth/react'
 
 export default function AdminNavIcons() {
+  async function handleLogout() {
+    try {
+      // Sign out and redirect to login page
+      await signOut({ 
+        redirect: true,
+        callbackUrl: '/login'
+      })
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Fallback: force redirect to login if signOut fails
+      window.location.href = '/login'
+    }
+  }
   return (
     <div
       style={{
@@ -148,6 +162,87 @@ export default function AdminNavIcons() {
           className="tooltip"
         >
           new node
+        </span>
+      </div>
+
+      {/* Logout icon button */}
+      <div style={{ position: 'relative' }}>
+        <button
+          type="button"
+          onClick={handleLogout}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '40px',
+            height: '40px',
+            backgroundColor: '#1a1a1a',
+            border: '1px solid #333',
+            borderRadius: '4px',
+            color: '#ffffff',
+            cursor: 'pointer',
+            padding: 0,
+            margin: 0,
+            outline: 'none',
+            transition: 'all 0.2s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = '#555'
+            e.currentTarget.style.backgroundColor = '#2a2a2a'
+            const tooltip = e.currentTarget.parentElement?.querySelector('.tooltip') as HTMLElement
+            if (tooltip) tooltip.style.opacity = '1'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = '#333'
+            e.currentTarget.style.backgroundColor = '#1a1a1a'
+            const tooltip = e.currentTarget.parentElement?.querySelector('.tooltip') as HTMLElement
+            if (tooltip) tooltip.style.opacity = '0'
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = '#555'
+            e.currentTarget.style.backgroundColor = '#2a2a2a'
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = '#333'
+            e.currentTarget.style.backgroundColor = '#1a1a1a'
+          }}
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#ffffff"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+        </button>
+        <span
+          style={{
+            position: 'absolute',
+            left: '100%',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            marginLeft: '0.5rem',
+            padding: '0.25rem 0.5rem',
+            backgroundColor: '#1a1a1a',
+            color: '#ffffff',
+            fontSize: '0.75rem',
+            borderRadius: '4px',
+            whiteSpace: 'nowrap',
+            opacity: 0,
+            pointerEvents: 'none',
+            transition: 'opacity 0.2s ease',
+            zIndex: 1001,
+          }}
+          className="tooltip"
+        >
+          logout
         </span>
       </div>
     </div>
