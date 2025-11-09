@@ -132,7 +132,8 @@ export default async function Page({ params }: { params: { path?: string[] } }) 
       block.isDescription === true || block.type === 'description'
     )
     if (descriptionBlock && typeof descriptionBlock === 'object' && 'text' in descriptionBlock) {
-      description = descriptionBlock.text || null
+      const textValue = (descriptionBlock as any).text
+      description = typeof textValue === 'string' ? textValue : null
     }
   }
   
