@@ -90,8 +90,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         console.log('[AUTH DEBUG] About to query Prisma for user with email:', email)
         console.log('[AUTH DEBUG] DATABASE_URL starts with:', process.env.DATABASE_URL?.substring(0, 20))
         
+        // Explicitly select passwordHash to ensure it's included in the result
         const user = await userModel.findUnique({
-          where: { email }
+          where: { email },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            passwordHash: true,
+          }
+        })
+
+        // CRITICAL DEBUG: Log the full user object to see what Prisma returns
+        console.log('[AUTH DEBUG] User from DB:', {
+          id: user?.id,
+          email: user?.email,
+          name: user?.name,
+          hasPasswordHash: !!user?.passwordHash,
+          passwordHashType: typeof user?.passwordHash,
+          passwordHashValue: user?.passwordHash ? `${user.passwordHash.substring(0, 20)}...` : 'undefined',
+          passwordHashLength: user?.passwordHash?.length,
+          allKeys: user ? Object.keys(user) : 'user is null'
+        })
+        const passwordStr = credentials.password as string | undefined
+        console.log('[AUTH DEBUG] Credentials received:', {
+          email: credentials.email,
+          hasPassword: !!credentials.password,
+          passwordLength: passwordStr?.length ?? 0
         })
 
         if (!user) {
@@ -101,17 +126,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!user.passwordHash) {
           console.log('[AUTH DEBUG] User found but has no passwordHash')
+          console.log('[AUTH DEBUG] Available user fields:', Object.keys(user))
           return null
         }
 
         console.log('[AUTH DEBUG] User found, comparing password...')
         console.log('[AUTH DEBUG] Password hash exists:', !!user.passwordHash)
         console.log('[AUTH DEBUG] Hash length:', user.passwordHash?.length)
+        console.log('[AUTH DEBUG] Hash starts with:', user.passwordHash?.substring(0, 10))
 
         const valid = await bcrypt.compare(password, user.passwordHash)
 
+        console.log('[AUTH DEBUG] Password comparison result:', valid)
         if (!valid) {
           console.log('[AUTH DEBUG] Password comparison failed')
+          console.log('[AUTH DEBUG] Input password length:', password.length)
+          console.log('[AUTH DEBUG] Stored hash length:', user.passwordHash.length)
           return null
         }
 
