@@ -5,6 +5,10 @@ import FilePathSegments from "@/components/FilePathSegments";
 import BackButton from "@/components/BackButton";
 import FolderTree from "@/components/FolderTree";
 
+// Force dynamic rendering - don't try to statically generate pages that query the database
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 interface TreeNode {
   name: string
   path: string

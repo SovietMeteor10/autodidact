@@ -1,6 +1,10 @@
 import { prisma } from '@/lib/db'
 import HomeTree from '@/components/HomeTree'
 
+// Force dynamic rendering - don't try to statically generate pages that query the database
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 interface TreeNode {
   name: string
   path: string
