@@ -35,18 +35,29 @@ try {
   
   // Generate Prisma client from the schema
   // CRITICAL: Set DISABLE_ACCELERATE during generation to ensure client is configured correctly
+  // Also explicitly set environment variables to prevent Accelerate detection
+  const generateEnv = {
+    ...process.env,
+    // Ensure Prisma generates to the correct location (admin's node_modules)
+    PRISMA_GENERATE_DATAPROXY: 'false',
+    // Force disable Accelerate during client generation
+    DISABLE_ACCELERATE: '1',
+    // Explicitly disable Accelerate (multiple ways to ensure it's off)
+    PRISMA_ACCELERATE_DISABLED: 'true',
+    // Ensure Prisma generates to admin's node_modules, not root
+    PRISMA_CLI_QUERY_ENGINE_TYPE: 'library',
+    // Don't use Data Proxy (Accelerate feature)
+    PRISMA_CLIENT_ENGINE_TYPE: 'library',
+  }
+  
+  console.log('[Prisma Setup] Environment for generation:')
+  console.log('[Prisma Setup] - DISABLE_ACCELERATE:', generateEnv.DISABLE_ACCELERATE)
+  console.log('[Prisma Setup] - PRISMA_GENERATE_DATAPROXY:', generateEnv.PRISMA_GENERATE_DATAPROXY)
+  
   execSync(`npx prisma generate --schema="${schemaPath}"`, {
     cwd: adminDir,
     stdio: 'inherit',
-    env: {
-      ...process.env,
-      // Ensure Prisma generates to the correct location (admin's node_modules)
-      PRISMA_GENERATE_DATAPROXY: 'false',
-      // Force disable Accelerate during client generation
-      DISABLE_ACCELERATE: process.env.DISABLE_ACCELERATE || '1',
-      // Ensure Prisma generates to admin's node_modules, not root
-      PRISMA_CLI_QUERY_ENGINE_TYPE: 'library',
-    }
+    env: generateEnv
   })
   
   console.log('[Prisma Setup] ✅ Prisma client generated successfully')

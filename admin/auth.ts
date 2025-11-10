@@ -76,9 +76,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         console.log('[AUTH DEBUG] Attempting login for email:', email)
         console.log('[AUTH DEBUG] Runtime check - process.versions.node:', process.versions?.node)
         console.log('[AUTH DEBUG] DISABLE_ACCELERATE:', process.env.DISABLE_ACCELERATE)
+        console.log('[AUTH DEBUG] Credentials received:', {
+          hasEmail: !!credentials.email,
+          hasPassword: !!credentials.password,
+          emailType: typeof credentials.email,
+          passwordType: typeof credentials.password
+        })
 
         // Get user model with runtime check
         const userModel = getUserModel()
+        
+        // Log before query to see if Prisma client is initialized correctly
+        console.log('[AUTH DEBUG] About to query Prisma for user with email:', email)
+        console.log('[AUTH DEBUG] DATABASE_URL starts with:', process.env.DATABASE_URL?.substring(0, 20))
+        
         const user = await userModel.findUnique({
           where: { email }
         })
