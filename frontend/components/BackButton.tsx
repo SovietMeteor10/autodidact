@@ -7,7 +7,7 @@ export default function BackButton() {
 
   return (
     <button
-      onClick={() => router.back()}
+      onClick={() => router.back()} 
       className="folder-link back-button"
       style={{
         color: '#ffffff',
