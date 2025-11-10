@@ -2,23 +2,6 @@
 // This ensures we use the client generated from admin/prisma/schema.prisma
 import { PrismaClient } from '@prisma/client'
 
-// Verify we're importing from the correct location
-// In production, this will help identify if the wrong Prisma client is being used
-try {
-  const prismaModulePath = require.resolve('@prisma/client')
-  console.log('[DB INIT] - Prisma client imported from:', prismaModulePath)
-  
-  // Check if it's from root node_modules (bad) or admin node_modules (good)
-  if (prismaModulePath.includes('/node_modules/@prisma/client') && 
-      !prismaModulePath.includes('/admin/node_modules/@prisma/client')) {
-    console.warn('[DB INIT] ⚠️  WARNING: Prisma client may be from root node_modules!')
-    console.warn('[DB INIT] ⚠️  This could be the Accelerate-enabled client')
-    console.warn('[DB INIT] ⚠️  Expected path to contain: /admin/node_modules/')
-  }
-} catch (e) {
-  console.warn('[DB INIT] Could not verify Prisma client import path:', e)
-}
-
 const globalForPrisma = global as unknown as { prisma: PrismaClient }
 
 // Validate DATABASE_URL before creating Prisma Client
@@ -115,22 +98,9 @@ export const prisma =
       : ['error'],
   })
   
-// Wrap Prisma client creation in try-catch to provide better error message
-// if Accelerate is detected
-try {
-  // Access a property to trigger initialization and detect Accelerate
-  const _ = (prisma as any)._engine
-} catch (e: any) {
-  if (e?.message?.includes('prisma://') || e?.message?.includes('prisma+postgres://')) {
-    console.error('[DB INIT] ❌ CRITICAL: Prisma client was generated with Accelerate!')
-    console.error('[DB INIT] Error:', e.message)
-    console.error('[DB INIT] SOLUTION: Clear Vercel build cache and redeploy')
-    throw new Error(
-      'Prisma client requires prisma:// URLs. The client was generated with Accelerate enabled. ' +
-      'Clear Vercel build cache (Deployments → Redeploy → Clear Build Cache) and redeploy.'
-    )
-  }
-}
+// Note: Prisma client initialization happens lazily on first query
+// If you see "URL must start with prisma://" errors, it means the Prisma client
+// was generated with Accelerate enabled. Clear Vercel build cache and redeploy.
 
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma
