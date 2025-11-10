@@ -34,10 +34,21 @@ function getUserModel() {
   return prismaWithUser.user
 }
 
+// Validate auth secret is set
+const authSecret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET
+if (!authSecret) {
+  throw new Error(
+    'AUTH_SECRET or NEXTAUTH_SECRET must be set in Vercel environment variables. ' +
+    'Current values: AUTH_SECRET=' + (process.env.AUTH_SECRET ? '[SET]' : '[NOT SET]') +
+    ', NEXTAUTH_SECRET=' + (process.env.NEXTAUTH_SECRET ? '[SET]' : '[NOT SET]')
+  )
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma as any),
   session: { strategy: "jwt" },
-  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  // NextAuth v5 uses AUTH_SECRET, but also accepts NEXTAUTH_SECRET for compatibility
+  secret: authSecret,
   providers: [
     Credentials({
       name: "Credentials",
