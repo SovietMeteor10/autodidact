@@ -2,7 +2,8 @@
 
 /**
  * Setup script to ensure Prisma client is generated correctly
- * This handles the monorepo structure where schema is at ../prisma/schema.prisma
+ * Uses ONLY the admin/prisma/schema.prisma file (never falls back to root schema)
+ * This ensures we don't accidentally use a schema with Accelerate enabled
  */
 
 const { execSync } = require('child_process')
@@ -11,16 +12,13 @@ const fs = require('fs')
 
 // Get admin directory (where this script lives)
 const adminDir = path.resolve(__dirname, '..')
-// Get root directory (one level up from admin)
-const rootDir = path.resolve(adminDir, '..')
-// Try local schema first (for Vercel builds), then fall back to root schema
-const localSchemaPath = path.join(adminDir, 'prisma', 'schema.prisma')
-const rootSchemaPath = path.join(rootDir, 'prisma', 'schema.prisma')
-const schemaPath = fs.existsSync(localSchemaPath) ? localSchemaPath : rootSchemaPath
+// CRITICAL: Use ONLY the admin schema - never fall back to root schema
+// This ensures we don't accidentally use a schema with Accelerate enabled
+const schemaPath = path.join(adminDir, 'prisma', 'schema.prisma')
 
 console.log('[Prisma Setup] Admin directory:', adminDir)
-console.log('[Prisma Setup] Root directory:', rootDir)
 console.log('[Prisma Setup] Schema path:', schemaPath)
+console.log('[Prisma Setup] Using ADMIN schema ONLY (not root schema)')
 
 // Check if schema file exists
 if (!fs.existsSync(schemaPath)) {
@@ -48,16 +46,20 @@ try {
   console.log('[Prisma Setup] ✅ Prisma client generated successfully')
   
   // Verify the generated client location
-  const prismaClientPath = path.join(rootDir, 'node_modules', '@prisma', 'client')
-  if (fs.existsSync(prismaClientPath)) {
-    console.log('[Prisma Setup] ✅ Prisma client found at:', prismaClientPath)
+  // Check admin's node_modules first (where it should be generated)
+  const adminPrismaPath = path.join(adminDir, 'node_modules', '@prisma', 'client')
+  if (fs.existsSync(adminPrismaPath)) {
+    console.log('[Prisma Setup] ✅ Prisma client found at:', adminPrismaPath)
   } else {
-    // Also check in admin's node_modules
-    const adminPrismaPath = path.join(adminDir, 'node_modules', '@prisma', 'client')
-    if (fs.existsSync(adminPrismaPath)) {
-      console.log('[Prisma Setup] ✅ Prisma client found at:', adminPrismaPath)
+    // Also check root node_modules (fallback for monorepo setups)
+    const rootDir = path.resolve(adminDir, '..')
+    const rootPrismaPath = path.join(rootDir, 'node_modules', '@prisma', 'client')
+    if (fs.existsSync(rootPrismaPath)) {
+      console.log('[Prisma Setup] ✅ Prisma client found at root:', rootPrismaPath)
     } else {
       console.warn('[Prisma Setup] ⚠️  Prisma client not found at expected locations')
+      console.warn('[Prisma Setup] Checked:', adminPrismaPath)
+      console.warn('[Prisma Setup] Checked:', rootPrismaPath)
     }
   }
   
@@ -71,6 +73,23 @@ try {
   } else {
     console.log('[Prisma Setup] ✅ Schema contains all required models:', requiredModels.join(', '))
   }
+  
+  // CRITICAL: Verify schema does NOT have Accelerate configuration
+  if (schemaContent.includes('accelerate') || schemaContent.includes('Accelerate')) {
+    console.error('[Prisma Setup] ❌ ERROR: Schema contains Accelerate configuration!')
+    console.error('[Prisma Setup] This will cause Prisma to require prisma:// URLs')
+    console.error('[Prisma Setup] Remove any accelerate/previewFeatures from schema')
+    process.exit(1)
+  }
+  
+  // Verify datasource uses postgresql, not prisma
+  if (!schemaContent.includes('provider = "postgresql"')) {
+    console.error('[Prisma Setup] ❌ ERROR: Schema must use provider = "postgresql"')
+    console.error('[Prisma Setup] Found:', schemaContent.match(/provider\s*=\s*"([^"]+)"/)?.[1] || 'unknown')
+    process.exit(1)
+  }
+  
+  console.log('[Prisma Setup] ✅ Schema verified: uses postgresql provider, no Accelerate')
 } catch (error) {
   console.error('[Prisma Setup] ERROR generating Prisma client:', error.message)
   process.exit(1)
