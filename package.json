@@ -1,0 +1,8 @@
+{
+  "name": "autodidact",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "generate:prisma": "prisma generate --schema=admin/prisma/schema.prisma"
+  }
+}
