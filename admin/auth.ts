@@ -46,6 +46,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
+        // CRITICAL: Verify Node.js runtime before using Prisma
+        if (typeof process === 'undefined' || !process.versions?.node) {
+          console.error('[AUTH ERROR] Running in Edge runtime - Prisma cannot work here')
+          console.error('[AUTH ERROR] DISABLE_ACCELERATE:', process.env.DISABLE_ACCELERATE)
+          return null
+        }
+
         if (!credentials?.email || !credentials?.password) {
           console.log('[AUTH DEBUG] Missing email or password')
           return null
@@ -56,6 +63,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const password = credentials.password as string
 
         console.log('[AUTH DEBUG] Attempting login for email:', email)
+        console.log('[AUTH DEBUG] Runtime check - process.versions.node:', process.versions?.node)
+        console.log('[AUTH DEBUG] DISABLE_ACCELERATE:', process.env.DISABLE_ACCELERATE)
 
         // Get user model with runtime check
         const userModel = getUserModel()

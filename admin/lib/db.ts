@@ -33,12 +33,35 @@ if (!disableAccelerate) {
   console.error('[DB ERROR] Set DISABLE_ACCELERATE=1 in Vercel → Admin Project → Environment Variables')
 }
 
+// CRITICAL: Verify we're in Node.js runtime before creating Prisma Client
+// Edge runtime doesn't have process.versions.node
+if (typeof process === 'undefined' || !process.versions?.node) {
+  const error = 'CRITICAL: Prisma Client cannot be created in Edge runtime. This module must run in Node.js runtime.'
+  console.error('[DB ERROR]', error)
+  throw new Error(error)
+}
+
 // Log runtime information
 console.log('[DB INIT] Runtime check:')
 console.log('[DB INIT] - typeof EdgeRuntime:', typeof (globalThis as any).EdgeRuntime)
 console.log('[DB INIT] - process.versions.node:', process.versions?.node || 'not available')
 console.log('[DB INIT] - DISABLE_ACCELERATE:', process.env.DISABLE_ACCELERATE)
 console.log('[DB INIT] - DATABASE_URL starts with:', dbUrl.substring(0, 30))
+
+// Create Prisma Client with explicit configuration to avoid Accelerate
+// CRITICAL: Ensure DISABLE_ACCELERATE is set before creating the client
+// Prisma checks this at client creation time, not at query time
+if (!disableAccelerate) {
+  throw new Error(
+    'DISABLE_ACCELERATE must be set to "1" before creating Prisma Client. ' +
+    'Current value: ' + (process.env.DISABLE_ACCELERATE || 'undefined')
+  )
+}
+
+// Force Node.js runtime detection by ensuring process is available
+if (typeof process === 'undefined') {
+  throw new Error('Prisma Client requires Node.js runtime. Edge runtime is not supported.')
+}
 
 export const prisma =
   globalForPrisma.prisma ??

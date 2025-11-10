@@ -32,6 +32,7 @@ console.log('[Prisma Setup] Schema file found, generating Prisma client...')
 
 try {
   // Generate Prisma client from the schema
+  // CRITICAL: Set DISABLE_ACCELERATE during generation to ensure client is configured correctly
   execSync(`npx prisma generate --schema="${schemaPath}"`, {
     cwd: adminDir,
     stdio: 'inherit',
@@ -39,6 +40,8 @@ try {
       ...process.env,
       // Ensure Prisma generates to the correct location
       PRISMA_GENERATE_DATAPROXY: 'false',
+      // Force disable Accelerate during client generation
+      DISABLE_ACCELERATE: process.env.DISABLE_ACCELERATE || '1',
     }
   })
   

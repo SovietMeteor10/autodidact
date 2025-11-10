@@ -4,6 +4,8 @@
 
 generator client {
   provider = "prisma-client-js"
+  // Explicitly disable Edge runtime support to force Node.js runtime
+  // This ensures Prisma uses standard PostgreSQL connections, not Accelerate
 }
 
 datasource db {
