@@ -1,27 +1,52 @@
 # Vercel Environment Variables Checklist
 
-## ⚠️ CRITICAL: Admin Project Environment Variables
+## ⚠️ CRITICAL: Both Projects Need Environment Variables
 
-Your admin project (`admin.autodidact.fun`) is a **separate Vercel project** and needs its own environment variables.
+You have **TWO separate Vercel projects**:
+1. **Admin Project** (`admin.autodidact.fun`)
+2. **Frontend Project** (`autodidact.fun`)
 
-### Required Environment Variables
+Both need the correct `DATABASE_URL` set in Vercel.
 
-Go to: **Vercel Dashboard → Your Admin Project → Settings → Environment Variables**
+---
 
-Add these **THREE** variables:
+## ✅ Admin Project Environment Variables
+
+Go to: **Vercel Dashboard → Admin Project → Settings → Environment Variables**
+
+### Required Environment Variables:
 
 ```env
-# 1. Database Connection (REQUIRED)
+# 1. Database Connection (REQUIRED) - CORRECT URL
 DATABASE_URL="postgresql://neondb_owner:npg_BQp4Nvo6Yxki@ep-patient-block-adwml03e-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 
 # 2. NextAuth Secret (REQUIRED)
-# Use the same value from your .env.local
 AUTH_SECRET="gzoDF9aHLw7BAu/vXoFn9SoF7zlO7syVlgDRKR496WM="
 
 # 3. NextAuth URL (REQUIRED)
-# MUST match your admin domain exactly
 NEXTAUTH_URL="https://admin.autodidact.fun"
+
+# 4. Disable Accelerate (REQUIRED)
+DISABLE_ACCELERATE="1"
 ```
+
+---
+
+## ✅ Frontend Project Environment Variables
+
+Go to: **Vercel Dashboard → Frontend Project → Settings → Environment Variables**
+
+### Required Environment Variables:
+
+```env
+# 1. Database Connection (REQUIRED) - SAME URL AS ADMIN
+DATABASE_URL="postgresql://neondb_owner:npg_BQp4Nvo6Yxki@ep-patient-block-adwml03e-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+
+# 2. Disable Accelerate (REQUIRED)
+DISABLE_ACCELERATE="1"
+```
+
+**⚠️ IMPORTANT**: The frontend project was missing the correct `DATABASE_URL` - this is why pages were crashing!
 
 ### Important Notes
 

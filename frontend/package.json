@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate --schema=../prisma/schema.prisma && mkdir -p node_modules/.prisma && ROOT_DIR=$(cd .. && pwd) && ln -sf \"$ROOT_DIR/node_modules/.prisma/client\" node_modules/.prisma/client || true"
+    "postinstall": "prisma generate --schema=./prisma/schema.prisma",
+    "prebuild": "prisma generate --schema=./prisma/schema.prisma"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",
