@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db"
 import Credentials from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 import NextAuth from "next-auth"
-import type { PrismaClient } from "@prisma/client"
+import type { PrismaClient } from "@prisma/client" 
 
 // Helper to safely access user model with detailed error reporting
 // Uses type assertion to avoid TypeScript errors during build
