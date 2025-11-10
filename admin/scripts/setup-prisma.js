@@ -75,10 +75,19 @@ try {
   }
   
   // CRITICAL: Verify schema does NOT have Accelerate configuration
-  if (schemaContent.includes('accelerate') || schemaContent.includes('Accelerate')) {
+  // Check for actual Accelerate configuration, not just the word in comments
+  const hasAccelerateProvider = schemaContent.includes('provider = "prisma"') || 
+                                 schemaContent.includes("provider = 'prisma'")
+  const hasAcceleratePreview = /previewFeatures\s*=\s*\[[^\]]*accelerate/i.test(schemaContent)
+  const hasAccelerateDirect = /accelerate\s*=\s*true/i.test(schemaContent)
+  
+  if (hasAccelerateProvider || hasAcceleratePreview || hasAccelerateDirect) {
     console.error('[Prisma Setup] ❌ ERROR: Schema contains Accelerate configuration!')
     console.error('[Prisma Setup] This will cause Prisma to require prisma:// URLs')
     console.error('[Prisma Setup] Remove any accelerate/previewFeatures from schema')
+    if (hasAccelerateProvider) console.error('[Prisma Setup] Found: provider = "prisma"')
+    if (hasAcceleratePreview) console.error('[Prisma Setup] Found: previewFeatures with accelerate')
+    if (hasAccelerateDirect) console.error('[Prisma Setup] Found: accelerate = true')
     process.exit(1)
   }
   
