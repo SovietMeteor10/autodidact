@@ -22,12 +22,23 @@ if (!dbUrl.startsWith('postgresql://') && !dbUrl.startsWith('postgres://')) {
 }
 
 // Prisma Client reads DATABASE_URL from environment variables automatically
-// Explicitly disable Accelerate to ensure we use standard PostgreSQL connection
-// DISABLE_ACCELERATE=1 should be set in Vercel environment variables
-if (process.env.DISABLE_ACCELERATE !== '1' && process.env.DISABLE_ACCELERATE !== 'true') {
-  console.warn('[DB WARNING] DISABLE_ACCELERATE is not set. Prisma may try to use Accelerate.')
-  console.warn('[DB WARNING] Set DISABLE_ACCELERATE=1 in Vercel environment variables.')
+// CRITICAL: DISABLE_ACCELERATE=1 must be set in Vercel environment variables
+// Without it, Prisma will try to use Accelerate in Edge runtime, requiring prisma:// URLs
+const disableAccelerate = process.env.DISABLE_ACCELERATE === '1' || process.env.DISABLE_ACCELERATE === 'true'
+
+if (!disableAccelerate) {
+  console.error('[DB ERROR] DISABLE_ACCELERATE is not set to "1" or "true"')
+  console.error('[DB ERROR] Current value:', process.env.DISABLE_ACCELERATE)
+  console.error('[DB ERROR] This will cause Prisma to require prisma:// URLs')
+  console.error('[DB ERROR] Set DISABLE_ACCELERATE=1 in Vercel → Admin Project → Environment Variables')
 }
+
+// Log runtime information
+console.log('[DB INIT] Runtime check:')
+console.log('[DB INIT] - typeof EdgeRuntime:', typeof (globalThis as any).EdgeRuntime)
+console.log('[DB INIT] - process.versions.node:', process.versions?.node || 'not available')
+console.log('[DB INIT] - DISABLE_ACCELERATE:', process.env.DISABLE_ACCELERATE)
+console.log('[DB INIT] - DATABASE_URL starts with:', dbUrl.substring(0, 30))
 
 export const prisma =
   globalForPrisma.prisma ??
@@ -35,8 +46,6 @@ export const prisma =
     log: process.env.NODE_ENV === 'development'
       ? ['query', 'error', 'warn']
       : ['error'],
-    // Ensure we're not using Accelerate
-    // Prisma will use standard PostgreSQL connection when DISABLE_ACCELERATE is set
   })
 
 if (process.env.NODE_ENV !== 'production') {

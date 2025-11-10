@@ -2,12 +2,20 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 /**
- * Middleware configuration
- * Protects admin routes and API endpoints
+ * MIDDLEWARE DISABLED
  * 
- * NOTE: This middleware only checks for auth cookies to keep bundle size small.
- * Actual session validation happens in server components using auth().
+ * This middleware was disabled because Next.js middleware ALWAYS runs in Edge Runtime,
+ * which forces Prisma Accelerate mode even when DISABLE_ACCELERATE=1 is set.
+ * 
+ * Auth protection is now handled in:
+ * - Server components (using auth() from @/auth)
+ * - API route handlers (using auth() from @/auth)
+ * 
+ * This ensures all Prisma operations run in Node.js runtime.
  */
+
+// DISABLED - Uncomment to re-enable (but this will break Prisma)
+/*
 export const config = {
   matcher: [
     '/admin/:path*',
@@ -15,10 +23,6 @@ export const config = {
   ],
 }
 
-/**
- * Middleware to protect admin routes
- * Uses lightweight cookie check to avoid importing Prisma/NextAuth (keeps bundle < 1MB)
- */
 export function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname
 
@@ -56,4 +60,5 @@ export function middleware(req: NextRequest) {
 
   return NextResponse.next()
 }
+*/
 
