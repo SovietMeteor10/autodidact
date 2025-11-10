@@ -12,7 +12,7 @@ Add these **THREE** variables:
 
 ```env
 # 1. Database Connection (REQUIRED)
-DATABASE_URL="postgresql://neondb_owner:npg_IWn5F2ZByixj@ep-patient-block-adwml03e-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+DATABASE_URL="postgresql://neondb_owner:npg_BQp4Nvo6Yxki@ep-patient-block-adwml03e-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 
 # 2. NextAuth Secret (REQUIRED)
 # Use the same value from your .env.local
