@@ -2,7 +2,11 @@
   "name": "autodidact",
   "version": "0.1.0",
   "private": true,
+  "prisma": {
+    "schema": "admin/prisma/schema.prisma"
+  },
   "scripts": {
-    "generate:prisma": "prisma generate --schema=admin/prisma/schema.prisma"
+    "generate:prisma": "prisma generate --schema=admin/prisma/schema.prisma",
+    "postinstall": "prisma generate --schema=admin/prisma/schema.prisma"
   }
 }
