@@ -1,4 +1,23 @@
+// CRITICAL: Import Prisma Client from admin's node_modules, not root
+// This ensures we use the client generated from admin/prisma/schema.prisma
 import { PrismaClient } from '@prisma/client'
+
+// Verify we're importing from the correct location
+// In production, this will help identify if the wrong Prisma client is being used
+try {
+  const prismaModulePath = require.resolve('@prisma/client')
+  console.log('[DB INIT] - Prisma client imported from:', prismaModulePath)
+  
+  // Check if it's from root node_modules (bad) or admin node_modules (good)
+  if (prismaModulePath.includes('/node_modules/@prisma/client') && 
+      !prismaModulePath.includes('/admin/node_modules/@prisma/client')) {
+    console.warn('[DB INIT] ⚠️  WARNING: Prisma client may be from root node_modules!')
+    console.warn('[DB INIT] ⚠️  This could be the Accelerate-enabled client')
+    console.warn('[DB INIT] ⚠️  Expected path to contain: /admin/node_modules/')
+  }
+} catch (e) {
+  console.warn('[DB INIT] Could not verify Prisma client import path:', e)
+}
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient }
 
@@ -48,6 +67,27 @@ console.log('[DB INIT] - process.versions.node:', process.versions?.node || 'not
 console.log('[DB INIT] - DISABLE_ACCELERATE:', process.env.DISABLE_ACCELERATE)
 console.log('[DB INIT] - DATABASE_URL starts with:', dbUrl.substring(0, 30))
 
+// CRITICAL: Check Prisma client version and engine type
+// This will show if Accelerate is still enabled in the generated client
+try {
+  const PrismaClientModule = require('@prisma/client')
+  const prismaVersion = (PrismaClientModule as any).Prisma?.prismaVersion || 
+                        (PrismaClientModule as any).prismaVersion ||
+                        'unknown'
+  console.log('[DB INIT] - Prisma client version:', JSON.stringify(prismaVersion))
+  
+  // Check if the client has Accelerate engine
+  if (typeof prismaVersion === 'object' && prismaVersion.engine === 'accelerate') {
+    console.error('[DB INIT] ❌ ERROR: Prisma client was generated with Accelerate engine!')
+    console.error('[DB INIT] This means the schema used during generation had Accelerate enabled')
+    console.error('[DB INIT] Clear Vercel build cache and redeploy')
+  } else {
+    console.log('[DB INIT] ✅ Prisma client engine:', prismaVersion.engine || 'standard')
+  }
+} catch (e) {
+  console.warn('[DB INIT] Could not check Prisma version:', e)
+}
+
 // Create Prisma Client with explicit configuration to avoid Accelerate
 // CRITICAL: Ensure DISABLE_ACCELERATE is set before creating the client
 // Prisma checks this at client creation time, not at query time
@@ -63,6 +103,10 @@ if (typeof process === 'undefined') {
   throw new Error('Prisma Client requires Node.js runtime. Edge runtime is not supported.')
 }
 
+// Create Prisma Client
+// NOTE: If this throws "URL must start with prisma://", it means the Prisma client
+// was generated with Accelerate enabled. This happens when Vercel uses a cached
+// Prisma client from a previous build. SOLUTION: Clear Vercel build cache and redeploy.
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
@@ -70,6 +114,23 @@ export const prisma =
       ? ['query', 'error', 'warn']
       : ['error'],
   })
+  
+// Wrap Prisma client creation in try-catch to provide better error message
+// if Accelerate is detected
+try {
+  // Access a property to trigger initialization and detect Accelerate
+  const _ = (prisma as any)._engine
+} catch (e: any) {
+  if (e?.message?.includes('prisma://') || e?.message?.includes('prisma+postgres://')) {
+    console.error('[DB INIT] ❌ CRITICAL: Prisma client was generated with Accelerate!')
+    console.error('[DB INIT] Error:', e.message)
+    console.error('[DB INIT] SOLUTION: Clear Vercel build cache and redeploy')
+    throw new Error(
+      'Prisma client requires prisma:// URLs. The client was generated with Accelerate enabled. ' +
+      'Clear Vercel build cache (Deployments → Redeploy → Clear Build Cache) and redeploy.'
+    )
+  }
+}
 
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma

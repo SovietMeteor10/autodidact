@@ -29,6 +29,10 @@ if (!fs.existsSync(schemaPath)) {
 console.log('[Prisma Setup] Schema file found, generating Prisma client...')
 
 try {
+  // CRITICAL: Ensure we generate to admin's node_modules, not root
+  // Set PRISMA_GENERATE_DATAPROXY to false and specify output location
+  const adminNodeModules = path.join(adminDir, 'node_modules')
+  
   // Generate Prisma client from the schema
   // CRITICAL: Set DISABLE_ACCELERATE during generation to ensure client is configured correctly
   execSync(`npx prisma generate --schema="${schemaPath}"`, {
@@ -36,30 +40,42 @@ try {
     stdio: 'inherit',
     env: {
       ...process.env,
-      // Ensure Prisma generates to the correct location
+      // Ensure Prisma generates to the correct location (admin's node_modules)
       PRISMA_GENERATE_DATAPROXY: 'false',
       // Force disable Accelerate during client generation
       DISABLE_ACCELERATE: process.env.DISABLE_ACCELERATE || '1',
+      // Ensure Prisma generates to admin's node_modules, not root
+      PRISMA_CLI_QUERY_ENGINE_TYPE: 'library',
     }
   })
   
   console.log('[Prisma Setup] ✅ Prisma client generated successfully')
   
-  // Verify the generated client location
-  // Check admin's node_modules first (where it should be generated)
+  // CRITICAL: Verify the generated client is in admin's node_modules
   const adminPrismaPath = path.join(adminDir, 'node_modules', '@prisma', 'client')
+  const rootDir = path.resolve(adminDir, '..')
+  const rootPrismaPath = path.join(rootDir, 'node_modules', '@prisma', 'client')
+  
   if (fs.existsSync(adminPrismaPath)) {
-    console.log('[Prisma Setup] ✅ Prisma client found at:', adminPrismaPath)
-  } else {
-    // Also check root node_modules (fallback for monorepo setups)
-    const rootDir = path.resolve(adminDir, '..')
-    const rootPrismaPath = path.join(rootDir, 'node_modules', '@prisma', 'client')
+    console.log('[Prisma Setup] ✅ Prisma client found at ADMIN location:', adminPrismaPath)
+    
+    // WARNING: If root Prisma client also exists, it might be used instead
     if (fs.existsSync(rootPrismaPath)) {
-      console.log('[Prisma Setup] ✅ Prisma client found at root:', rootPrismaPath)
+      console.warn('[Prisma Setup] ⚠️  WARNING: Root Prisma client also exists at:', rootPrismaPath)
+      console.warn('[Prisma Setup] ⚠️  Vercel might use the root client instead of admin client!')
+      console.warn('[Prisma Setup] ⚠️  SOLUTION: Delete root node_modules/@prisma or ensure Vercel builds from admin/ directory')
+    }
+  } else {
+    // Fallback to root (not ideal, but log a warning)
+    if (fs.existsSync(rootPrismaPath)) {
+      console.warn('[Prisma Setup] ⚠️  WARNING: Prisma client generated to ROOT, not admin!')
+      console.warn('[Prisma Setup] ⚠️  This may cause Vercel to use the wrong client')
+      console.warn('[Prisma Setup] ⚠️  Found at:', rootPrismaPath)
     } else {
-      console.warn('[Prisma Setup] ⚠️  Prisma client not found at expected locations')
-      console.warn('[Prisma Setup] Checked:', adminPrismaPath)
-      console.warn('[Prisma Setup] Checked:', rootPrismaPath)
+      console.error('[Prisma Setup] ❌ ERROR: Prisma client not found at expected locations')
+      console.error('[Prisma Setup] Checked admin:', adminPrismaPath)
+      console.error('[Prisma Setup] Checked root:', rootPrismaPath)
+      process.exit(1)
     }
   }
   
