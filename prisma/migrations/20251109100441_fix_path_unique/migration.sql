@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE "Node" ALTER COLUMN "path" DROP DEFAULT;
