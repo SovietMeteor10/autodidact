@@ -12,7 +12,7 @@ import type { PrismaClient } from "@prisma/client"
 // Uses type assertion to avoid TypeScript errors during build
 function getUserModel() {
   // Type assertion to access user model (TypeScript may not see it during build)
-  const prismaWithUser = prisma as any
+  const prismaWithUser = prisma as any 
   
   // Check DATABASE_URL first
   if (!process.env.DATABASE_URL) {
