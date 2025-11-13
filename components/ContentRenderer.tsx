@@ -1,4 +1,5 @@
 import { PlainTextContentRenderer } from './PlainTextContentRenderer'
+import { createHeadingNumberer } from '@/lib/headingNumberer'
 
 interface ContentBlock {
   type: string
@@ -31,30 +32,39 @@ export function ContentRenderer({ blocks, plainText, sources = [] }: ContentRend
     return null
   }
 
+  // Create heading numberer for JSON blocks (default: numeric)
+  const headingNumberer = createHeadingNumberer('numeric')
+
   return (
     <div className="prose" style={{ maxWidth: '100%' }}>
       {blocks.map((block, i) => {
         switch (block.type) {
-          case 'heading':
+          case 'heading': {
+            const number = headingNumberer.getNumber(1)
             return (
               <h1 key={i} style={{ fontSize: '2rem', marginTop: '1.5rem', marginBottom: '1rem' }}>
-                {block.text}
+                {number ? `${number}. ` : ''}{block.text}
               </h1>
             )
+          }
           
-          case 'heading2':
+          case 'heading2': {
+            const number = headingNumberer.getNumber(2)
             return (
               <h2 key={i} style={{ fontSize: '1.5rem', marginTop: '1.25rem', marginBottom: '0.75rem' }}>
-                {block.text}
+                {number ? `${number}. ` : ''}{block.text}
               </h2>
             )
+          }
           
-          case 'heading3':
+          case 'heading3': {
+            const number = headingNumberer.getNumber(3)
             return (
               <h3 key={i} style={{ fontSize: '1.25rem', marginTop: '1rem', marginBottom: '0.5rem' }}>
-                {block.text}
+                {number ? `${number}. ` : ''}{block.text}
               </h3>
             )
+          }
           
           case 'paragraph':
             return (

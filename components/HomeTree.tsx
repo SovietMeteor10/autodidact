@@ -78,7 +78,7 @@ export default function HomeTree({ nodes }: HomeTreeProps) {
             alignItems: 'center',
             marginBottom: '0.25rem',
             fontFamily: 'monospace',
-            paddingLeft: depth > 0 ? '1.5rem' : '0',
+            paddingLeft: (depth + 1) * 0.5 + 'rem',
           }}
         >
           {/* Tree connector */}

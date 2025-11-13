@@ -26,6 +26,7 @@ model Node {
 
   parent    Node?    @relation("NodeToChildren", fields: [parentId], references: [id])
   children  Node[]   @relation("NodeToChildren")
+  tags      NodeTag[]
 
   @@unique([slug, parentId])
   @@index([parentId])
@@ -41,6 +42,28 @@ model Source {
   updatedAt DateTime @updatedAt
 
   @@index([name])
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  nodes     NodeTag[]
+
+  @@index([name])
+}
+
+model NodeTag {
+  nodeId String
+  tagId  String
+  node   Node @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([nodeId, tagId])
+  @@index([nodeId])
+  @@index([tagId])
 }
 
 // NextAuth models for authentication

@@ -218,7 +218,10 @@ export default function ChildNodeContentEditor({
         <div>Use <code style={{ fontFamily: 'monospace', color: '#ccc' }}>\cite&#123;source-name&#125;</code> to cite sources</div>
         <div>Use <code style={{ fontFamily: 'monospace', color: '#ccc' }}>\embed&#123;video-url&#125;</code> to embed videos</div>
         <div>Use <code style={{ fontFamily: 'monospace', color: '#ccc' }}>\heading&#123;text&#125;</code>, <code style={{ fontFamily: 'monospace', color: '#ccc' }}>\subheading&#123;text&#125;</code>, <code style={{ fontFamily: 'monospace', color: '#ccc' }}>\subsubheading&#123;text&#125;</code> for headings</div>
-        <div>Use <code style={{ fontFamily: 'monospace', color: '#ccc' }}>\item&#123;text&#125;</code> for bullet points</div>
+        <div>Use <code style={{ fontFamily: 'monospace', color: '#ccc' }}>\begin&#123;itemize&#125;</code> ... <code style={{ fontFamily: 'monospace', color: '#ccc' }}>\end&#123;itemize&#125;</code> for bullet points</div>
+        <div>Use <code style={{ fontFamily: 'monospace', color: '#ccc' }}>\begin&#123;enumerate&#125;</code> ... <code style={{ fontFamily: 'monospace', color: '#ccc' }}>\end&#123;enumerate&#125;</code> for numbered lists</div>
+        <div>Use <code style={{ fontFamily: 'monospace', color: '#ccc' }}>\begin&#123;list&#125;[arrow]</code> ... <code style={{ fontFamily: 'monospace', color: '#ccc' }}>\end&#123;list&#125;</code> for custom markers (arrow, or any custom character)</div>
+        <div>Use <code style={{ fontFamily: 'monospace', color: '#ccc' }}>\item&#123;content&#125;</code> for each item within a list</div>
         <div>Use <code style={{ fontFamily: 'monospace', color: '#ccc' }}>\link&#123;text, url&#125;</code> to create hyperlinks</div>
         <div>Use <code style={{ fontFamily: 'monospace', color: '#ccc' }}>\tag&#123;path&#125;</code> to link to another node (autocomplete appears when typing)</div>
       </div>

@@ -3,7 +3,7 @@
  */
 
 export interface ParsedContentSegment {
-  type: 'text' | 'citation' | 'embed' | 'heading' | 'subheading' | 'subsubheading' | 'bullet' | 'link' | 'tag'
+  type: 'text' | 'citation' | 'embed' | 'heading' | 'subheading' | 'subsubheading' | 'bullet' | 'link' | 'tag' | 'numbering-control'
   content: string
   citationName?: string
   embedUrl?: string
@@ -12,6 +12,7 @@ export interface ParsedContentSegment {
   linkText?: string
   linkUrl?: string
   tagPath?: string
+  numberingStyle?: 'numeric' | 'alphabetic' | 'none'
 }
 
 export interface ParsedContent {
@@ -50,15 +51,19 @@ export function parseContent(text: string): ParsedContent {
   const linkPattern = /\\link\{([^,]+),\s*([^}]+)\}/g
   // Tag pattern: \tag{path} - links to another node
   const tagPattern = /\\tag\{([^}]+)\}/g
+  // Numbering control pattern: {numeric = false}, {numeric=false}, {numeric = true}, etc.
+  // Also supports {style = "alphabetic"} or {style = "numeric"}
+  const numberingControlPattern = /\{(\w+)\s*=\s*([^}]+)\}/g
 
   let lastIndex = 0
   const matches: Array<{ 
-    type: 'cite' | 'embed' | 'heading' | 'subheading' | 'subsubheading' | 'bullet' | 'link' | 'tag'
+    type: 'cite' | 'embed' | 'heading' | 'subheading' | 'subsubheading' | 'bullet' | 'link' | 'tag' | 'numbering-control'
     index: number
     content: string
     name: string
     linkText?: string
     linkUrl?: string
+    numberingStyle?: 'numeric' | 'alphabetic' | 'none'
   }> = []
 
   // Find all citation matches
@@ -186,6 +191,43 @@ export function parseContent(text: string): ParsedContent {
     })
   }
 
+  // Find all numbering control matches: {numeric = false}, {style = "alphabetic"}, etc.
+  numberingControlPattern.lastIndex = 0
+  while ((match = numberingControlPattern.exec(normalizedText)) !== null) {
+    const key = match[1].trim().toLowerCase()
+    const value = match[2].trim().toLowerCase().replace(/['"]/g, '') // Remove quotes
+    
+    let numberingStyle: 'numeric' | 'alphabetic' | 'none' | undefined
+    
+    if (key === 'numeric') {
+      // {numeric = false} or {numeric = true}
+      if (value === 'false') {
+        numberingStyle = 'none'
+      } else {
+        numberingStyle = 'numeric'
+      }
+    } else if (key === 'style') {
+      // {style = "numeric"} or {style = "alphabetic"} or {style = "none"}
+      if (value === 'numeric') {
+        numberingStyle = 'numeric'
+      } else if (value === 'alphabetic') {
+        numberingStyle = 'alphabetic'
+      } else if (value === 'none' || value === 'false') {
+        numberingStyle = 'none'
+      }
+    }
+    
+    if (numberingStyle !== undefined) {
+      matches.push({
+        type: 'numbering-control',
+        index: match.index,
+        content: match[0],
+        name: key,
+        numberingStyle,
+      })
+    }
+  }
+
   // Sort matches by index
   matches.sort((a, b) => a.index - b.index)
 
@@ -252,6 +294,12 @@ export function parseContent(text: string): ParsedContent {
         content: match.content,
         tagPath: match.name,
       })
+    } else if (match.type === 'numbering-control') {
+      segments.push({
+        type: 'numbering-control',
+        content: match.content,
+        numberingStyle: match.numberingStyle,
+      })
     }
 
     lastIndex = match.index + match.content.length
@@ -280,7 +328,9 @@ export function parseContent(text: string): ParsedContent {
   segments.forEach(segment => {
     if (segment.type === 'text') {
       // Remove any remaining citation/embed/heading/link/tag patterns that might have been missed
+      // Also remove numbering control patterns
       segment.content = segment.content.replace(/\\(cite|embed|heading|subheading|subsubheading|item|link|tag)\{[^}]+\}/g, '')
+      segment.content = segment.content.replace(/\{\w+\s*=\s*[^}]+\}/g, '')
     }
   })
 

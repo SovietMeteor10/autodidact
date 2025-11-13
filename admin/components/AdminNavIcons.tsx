@@ -165,6 +165,74 @@ export default function AdminNavIcons() {
         </span>
       </div>
 
+      {/* Tags icon button */}
+      <div style={{ position: 'relative' }}>
+        <Link
+          href="/admin/tags"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '40px',
+            height: '40px',
+            backgroundColor: '#1a1a1a',
+            border: '1px solid #333',
+            borderRadius: '4px',
+            color: '#ffffff',
+            textDecoration: 'none',
+            transition: 'all 0.2s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = '#555'
+            e.currentTarget.style.backgroundColor = '#2a2a2a'
+            const tooltip = e.currentTarget.parentElement?.querySelector('.tooltip') as HTMLElement
+            if (tooltip) tooltip.style.opacity = '1'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = '#333'
+            e.currentTarget.style.backgroundColor = '#1a1a1a'
+            const tooltip = e.currentTarget.parentElement?.querySelector('.tooltip') as HTMLElement
+            if (tooltip) tooltip.style.opacity = '0'
+          }}
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#ffffff"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+            <line x1="7" y1="7" x2="7.01" y2="7"></line>
+          </svg>
+        </Link>
+        <span
+          style={{
+            position: 'absolute',
+            left: '100%',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            marginLeft: '0.5rem',
+            padding: '0.25rem 0.5rem',
+            backgroundColor: '#1a1a1a',
+            color: '#ffffff',
+            fontSize: '0.75rem',
+            borderRadius: '4px',
+            whiteSpace: 'nowrap',
+            opacity: 0,
+            pointerEvents: 'none',
+            transition: 'opacity 0.2s ease',
+            zIndex: 1001,
+          }}
+          className="tooltip"
+        >
+          tags
+        </span>
+      </div>
+
       {/* Logout icon button */}
       <div style={{ position: 'relative' }}>
         <button

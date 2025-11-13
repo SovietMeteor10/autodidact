@@ -5,6 +5,7 @@ import ChildrenList from '@/components/ChildrenList'
 import AdminBackButton from '@/components/AdminBackButton'
 import ChildNodeContentEditor from '@/components/ChildNodeContentEditor'
 import NodeSourcesList from '@/components/NodeSourcesList'
+import NodeTagsEditor from '@/components/NodeTagsEditor'
 
 // Mark page as dynamic to prevent static generation
 export const dynamic = 'force-dynamic'
@@ -30,6 +31,16 @@ export default async function EditNodePage({
       parent: {
         include: {
           parent: true,
+        },
+      },
+      tags: {
+        select: {
+          tag: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
       },
     },
@@ -62,6 +73,14 @@ export default async function EditNodePage({
               })()
             : null
         }
+      />
+
+      <NodeTagsEditor
+        nodeId={node.id}
+        initialTags={node.tags?.map((nodeTag) => ({
+          id: nodeTag.tag.id,
+          name: nodeTag.tag.name,
+        })) || []}
       />
 
       {node.parent && (

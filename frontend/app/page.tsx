@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db'
 import HomeTree from '@/components/HomeTree'
+import SearchBar from '@/components/SearchBar'
 
 // Force dynamic rendering - don't try to statically generate pages that query the database
 export const dynamic = 'force-dynamic'
@@ -93,8 +94,8 @@ export default async function Home() {
   console.log('Root tree structure:', JSON.stringify(rootTree, null, 2))
 
   return (
-    <main style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{ marginTop: '1.5rem' }}>
+    <main style={{ padding: '0 2rem 2rem 2rem', maxWidth: '1200px', margin: '0 auto' }}>
+      <div style={{ marginTop: '1rem' }}>
         <HomeTree nodes={[rootTree]} />
       </div>
     </main>

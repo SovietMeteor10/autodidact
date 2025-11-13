@@ -67,7 +67,10 @@ export async function POST(request: NextRequest) {
       contentValue = []
     }
 
-    // Create the node
+    // Handle tags - for explicit many-to-many, we need to create NodeTag records separately
+    const tagIds = body.tagIds || []
+
+    // Create the node first
     const node = await prisma.node.create({
       data: {
         title: validated.title,
@@ -77,6 +80,22 @@ export async function POST(request: NextRequest) {
         content: contentValue,
         order,
       },
+    })
+
+    // Then create the tag relationships if any
+    if (tagIds.length > 0) {
+      await prisma.nodeTag.createMany({
+        data: tagIds.map((tagId: string) => ({
+          nodeId: node.id,
+          tagId: tagId,
+        })),
+        skipDuplicates: true, // In case of duplicates
+      })
+    }
+
+    // Fetch the node with all relations
+    const nodeWithRelations = await prisma.node.findUnique({
+      where: { id: node.id },
       include: {
         children: {
           orderBy: { order: 'asc' },
@@ -89,10 +108,26 @@ export async function POST(request: NextRequest) {
             path: true,
           },
         },
+        tags: {
+          select: {
+            tag: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
       },
     })
 
-    return NextResponse.json(node, { status: 201 })
+    // Transform the tags to match the expected format
+    const transformedNode = nodeWithRelations ? {
+      ...nodeWithRelations,
+      tags: nodeWithRelations.tags.map((nt: any) => nt.tag),
+    } : node
+
+    return NextResponse.json(transformedNode, { status: 201 })
   } catch (error) {
     if (error instanceof ZodError) {
       return handleValidationError(error)

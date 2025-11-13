@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { parseContent, ParsedContentSegment } from '@/lib/contentParser'
 import { numberCitations } from '@/lib/citationNumberer'
 import { getEmbedUrl } from '@/lib/videoEmbed'
+import { createHeadingNumberer, HeadingNumberingStyle } from '@/lib/headingNumberer'
 
 interface Source {
   id: string
@@ -16,13 +17,15 @@ interface PlainTextContentRendererProps {
   sources: Source[]
 }
 
-// Union type for processed segments (includes bullet-list variant)
+// Union type for processed segments (includes bullet-list variant and numbered headings)
 type ProcessedSegment = ParsedContentSegment | {
   type: 'bullet-list'
   content: null
   isBulletList: true
   bullets: string[]
-}
+} | (ParsedContentSegment & {
+  headingNumber?: string | null
+})
 
 export function PlainTextContentRenderer({
   content,
@@ -59,13 +62,24 @@ export function PlainTextContentRenderer({
       })
   }, [parsed.citations, sourcesMap, sourcesByUrlMap, citationMap])
 
-  // Group consecutive bullet points into lists
+  // Process segments: group bullets and handle heading numbering
   const processedSegments = useMemo(() => {
     const result: ProcessedSegment[] = []
     let currentBulletList: string[] = []
+    let currentNumberingStyle: HeadingNumberingStyle = 'numeric' // Default to numeric
+    let headingNumberer = createHeadingNumberer(currentNumberingStyle)
     
     for (let i = 0; i < parsed.segments.length; i++) {
       const segment = parsed.segments[i]
+      
+      // Handle numbering control tags
+      if (segment.type === 'numbering-control' && segment.numberingStyle !== undefined) {
+        currentNumberingStyle = segment.numberingStyle
+        // Create a new numberer with the updated style (resets counters)
+        headingNumberer = createHeadingNumberer(currentNumberingStyle)
+        // Don't add this segment to result - it's just a control tag
+        continue
+      }
       
       if (segment.type === 'bullet') {
         currentBulletList.push(segment.bulletText || '')
@@ -82,7 +96,19 @@ export function PlainTextContentRenderer({
           currentBulletList = []
         }
       } else {
-        result.push(segment)
+        // Add heading numbers for heading segments
+        if (segment.type === 'heading' || segment.type === 'subheading' || segment.type === 'subsubheading') {
+          const number = headingNumberer.getNumber(
+            segment.type === 'heading' ? 1 : segment.type === 'subheading' ? 2 : 3
+          )
+          // Store the number in the segment (we'll use a custom property)
+          result.push({
+            ...segment,
+            headingNumber: number,
+          } as any)
+        } else {
+          result.push(segment)
+        }
       }
     }
     
@@ -101,6 +127,7 @@ export function PlainTextContentRenderer({
               </span>
             )
           } else if (segment.type === 'heading') {
+            const headingNumber = 'headingNumber' in segment ? segment.headingNumber : null
             return (
               <h1
                 key={index}
@@ -111,10 +138,11 @@ export function PlainTextContentRenderer({
                   fontWeight: 600,
                 }}
               >
-                {segment.headingText}
+                {headingNumber ? `${headingNumber}. ` : ''}{segment.headingText}
               </h1>
             )
           } else if (segment.type === 'subheading') {
+            const headingNumber = 'headingNumber' in segment ? segment.headingNumber : null
             return (
               <h2
                 key={index}
@@ -125,10 +153,11 @@ export function PlainTextContentRenderer({
                   fontWeight: 600,
                 }}
               >
-                {segment.headingText}
+                {headingNumber ? `${headingNumber}. ` : ''}{segment.headingText}
               </h2>
             )
           } else if (segment.type === 'subsubheading') {
+            const headingNumber = 'headingNumber' in segment ? segment.headingNumber : null
             return (
               <h3
                 key={index}
@@ -139,7 +168,7 @@ export function PlainTextContentRenderer({
                   fontWeight: 600,
                 }}
               >
-                {segment.headingText}
+                {headingNumber ? `${headingNumber}. ` : ''}{segment.headingText}
               </h3>
             )
           } else if (segment.type === 'bullet-list' && 'bullets' in segment) {

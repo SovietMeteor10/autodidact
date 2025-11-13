@@ -21,17 +21,33 @@ export async function GET(
           orderBy: { order: 'asc' },
         },
         parent: true,
+        tags: {
+          select: {
+            tag: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
       },
     })
 
-    if (!node) {
+    // Transform tags to match expected format
+    const transformedNode = node ? {
+      ...node,
+      tags: node.tags.map((nt: any) => nt.tag),
+    } : null
+
+    if (!transformedNode) {
       return NextResponse.json(
         { error: 'Node not found' },
         { status: 404 }
       )
     }
 
-    return NextResponse.json(node)
+    return NextResponse.json(transformedNode)
   } catch (error) {
     console.error('Error fetching node:', error)
     return NextResponse.json(
@@ -92,7 +108,7 @@ export async function PUT(
       newPath = await calculateNodePath(newSlug, newParentId)
     }
 
-    // Update the node
+    // Update the node (without tags first)
     const updated = await prisma.node.update({
       where: { id: params.id },
       data: {
@@ -110,12 +126,59 @@ export async function PUT(
       },
     })
 
+    // Handle tags separately for explicit many-to-many
+    if (body.tagIds !== undefined) {
+      const tagIds = body.tagIds || []
+      
+      // Delete all existing tag relationships
+      await prisma.nodeTag.deleteMany({
+        where: { nodeId: params.id },
+      })
+
+      // Create new tag relationships if any
+      if (tagIds.length > 0) {
+        await prisma.nodeTag.createMany({
+          data: tagIds.map((tagId: string) => ({
+            nodeId: params.id,
+            tagId: tagId,
+          })),
+          skipDuplicates: true,
+        })
+      }
+    }
+
+    // Fetch the node with tags included
+    const nodeWithTags = await prisma.node.findUnique({
+      where: { id: params.id },
+      include: {
+        children: {
+          orderBy: { order: 'asc' },
+        },
+        tags: {
+          select: {
+            tag: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    })
+
+    // Transform the tags to match the expected format
+    const finalNode = nodeWithTags ? {
+      ...nodeWithTags,
+      tags: nodeWithTags.tags.map((nt: any) => nt.tag),
+    } : updated
+
     // Update descendant paths if path changed
     if (newPath !== current.path) {
       await updateDescendantPaths(params.id, newPath)
     }
 
-    return NextResponse.json(updated)
+    return NextResponse.json(finalNode)
   } catch (error) {
     console.error('Error updating node:', error)
     return NextResponse.json(

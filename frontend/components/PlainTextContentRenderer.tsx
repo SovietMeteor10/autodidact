@@ -1,9 +1,10 @@
 'use client'
 
 import { useMemo } from 'react'
-import { parseContent, ParsedContentSegment } from '@/lib/contentParser'
+import { parseContent, ParsedContentSegment, ListBlock, ListItem } from '@/lib/contentParser'
 import { numberCitations } from '@/lib/citationNumberer'
 import { getEmbedUrl } from '@/lib/videoEmbed'
+import { createHeadingNumberer, HeadingNumberingStyle } from '@/lib/headingNumberer'
 
 interface Source {
   id: string
@@ -16,13 +17,6 @@ interface PlainTextContentRendererProps {
   sources: Source[]
 }
 
-// Union type for processed segments (includes bullet-list variant)
-type ProcessedSegment = ParsedContentSegment | {
-  type: 'bullet-list'
-  content: null
-  isBulletList: true
-  bullets: string[]
-}
 
 export function PlainTextContentRenderer({
   content,
@@ -59,28 +53,133 @@ export function PlainTextContentRenderer({
       })
   }, [parsed.citations, sourcesMap, sourcesByUrlMap, citationMap])
 
-  // Group consecutive bullet points into lists
+  // Helper function to render item content (may contain citations, embeds, etc.)
+  const renderItemContent = (itemContent: string, depth: number = 0) => {
+    // Parse the item content to handle citations, embeds, etc.
+    const itemParsed = parseContent(itemContent)
+    return (
+      <>
+        {itemParsed.segments.map((seg, idx) => {
+          if (seg.type === 'text') {
+            return <span key={idx}>{seg.content}</span>
+          } else if (seg.type === 'citation') {
+            const number = citationMap.get(seg.citationName || '')
+            let source = sourcesMap.get(seg.citationName || '')
+            if (!source && seg.citationName && (seg.citationName.startsWith('http://') || seg.citationName.startsWith('https://'))) {
+              source = sourcesByUrlMap.get(seg.citationName)
+            }
+            return (
+              <sup key={idx} style={{ color: '#888' }}>
+                [{number !== undefined ? number : '?'}]
+              </sup>
+            )
+          } else if (seg.type === 'embed') {
+            const embedUrl = getEmbedUrl(seg.embedUrl || '')
+            return embedUrl ? (
+              <iframe
+                key={idx}
+                src={embedUrl}
+                style={{
+                  width: '100%',
+                  height: '400px',
+                  border: 'none',
+                  margin: '1rem 0',
+                }}
+                allowFullScreen
+              />
+            ) : null
+          } else if (seg.type === 'list' && seg.listBlock) {
+            return (
+              <div key={idx} style={{ marginTop: '0.5rem' }}>
+                {renderListBlock(seg.listBlock, depth + 1)}
+              </div>
+            )
+          }
+          return null
+        })}
+      </>
+    )
+  }
+
+  // Helper function to render a list block
+  const renderListBlock = (listBlock: ListBlock, depth: number = 0) => {
+    const indent = depth * 1.5 // 1.5rem per level
+    let listStyleType: string = 'disc'
+    
+    if (listBlock.type === 'numeric') {
+      listStyleType = 'decimal'
+    } else if (listBlock.type === 'arrow') {
+      listStyleType = 'none'
+    } else if (listBlock.type === 'custom') {
+      listStyleType = 'none'
+    }
+
+    const ListTag = listBlock.type === 'numeric' ? 'ol' : 'ul'
+
+    return (
+      <ListTag
+        style={{
+          marginBottom: '1rem',
+          paddingLeft: `${1.5 + indent}rem`,
+          listStyleType: listStyleType === 'none' ? 'none' : listStyleType,
+        }}
+      >
+        {listBlock.items.map((item, itemIndex) => (
+          <li
+            key={itemIndex}
+            style={{
+              lineHeight: '1.8',
+              position: 'relative',
+            }}
+          >
+            {listBlock.type === 'arrow' && (
+              <span style={{ position: 'absolute', left: '-1.2rem' }}>→</span>
+            )}
+            {listBlock.type === 'custom' && listBlock.customChar && (
+              <span style={{ position: 'absolute', left: '-1.2rem' }}>{listBlock.customChar}</span>
+            )}
+            <span style={{ marginLeft: listStyleType === 'none' ? '0.5rem' : '0' }}>
+              {renderItemContent(item.content, depth)}
+            </span>
+            {item.nestedLists && item.nestedLists.map((nestedList, nestedIndex) => (
+              <div key={nestedIndex} style={{ marginTop: '0.5rem' }}>
+                {renderListBlock(nestedList, depth + 1)}
+              </div>
+            ))}
+          </li>
+        ))}
+      </ListTag>
+    )
+  }
+
+  // Process segments: handle heading numbering
   const processedSegments = useMemo(() => {
-    const result: ProcessedSegment[] = []
-    let currentBulletList: string[] = []
+    const result: Array<ParsedContentSegment & { headingNumber?: string | null }> = []
+    let currentNumberingStyle: HeadingNumberingStyle = 'numeric' // Default to numeric
+    let headingNumberer = createHeadingNumberer(currentNumberingStyle)
     
     for (let i = 0; i < parsed.segments.length; i++) {
       const segment = parsed.segments[i]
       
-      if (segment.type === 'bullet') {
-        currentBulletList.push(segment.bulletText || '')
-        // Check if next segment is also a bullet or if this is the last segment
-        const nextSegment = parsed.segments[i + 1]
-        if (!nextSegment || nextSegment.type !== 'bullet') {
-          // End of bullet list
-          result.push({
-            type: 'bullet-list',
-            content: null,
-            isBulletList: true,
-            bullets: [...currentBulletList],
-          })
-          currentBulletList = []
-        }
+      // Handle numbering control tags
+      if (segment.type === 'numbering-control' && segment.numberingStyle !== undefined) {
+        currentNumberingStyle = segment.numberingStyle
+        // Create a new numberer with the updated style (resets counters)
+        headingNumberer = createHeadingNumberer(currentNumberingStyle)
+        // Don't add this segment to result - it's just a control tag
+        continue
+      }
+      
+      // Add heading numbers for heading segments
+      if (segment.type === 'heading' || segment.type === 'subheading' || segment.type === 'subsubheading') {
+        const number = headingNumberer.getNumber(
+          segment.type === 'heading' ? 1 : segment.type === 'subheading' ? 2 : 3
+        )
+        // Store the number in the segment
+        result.push({
+          ...segment,
+          headingNumber: number,
+        })
       } else {
         result.push(segment)
       }
@@ -101,6 +200,7 @@ export function PlainTextContentRenderer({
               </span>
             )
           } else if (segment.type === 'heading') {
+            const headingNumber = 'headingNumber' in segment ? segment.headingNumber : null
             return (
               <h1
                 key={index}
@@ -111,10 +211,11 @@ export function PlainTextContentRenderer({
                   fontWeight: 600,
                 }}
               >
-                {segment.headingText}
+                {headingNumber ? `${headingNumber}. ` : ''}{segment.headingText}
               </h1>
             )
           } else if (segment.type === 'subheading') {
+            const headingNumber = 'headingNumber' in segment ? segment.headingNumber : null
             return (
               <h2
                 key={index}
@@ -125,10 +226,11 @@ export function PlainTextContentRenderer({
                   fontWeight: 600,
                 }}
               >
-                {segment.headingText}
+                {headingNumber ? `${headingNumber}. ` : ''}{segment.headingText}
               </h2>
             )
           } else if (segment.type === 'subsubheading') {
+            const headingNumber = 'headingNumber' in segment ? segment.headingNumber : null
             return (
               <h3
                 key={index}
@@ -139,31 +241,14 @@ export function PlainTextContentRenderer({
                   fontWeight: 600,
                 }}
               >
-                {segment.headingText}
+                {headingNumber ? `${headingNumber}. ` : ''}{segment.headingText}
               </h3>
             )
-          } else if (segment.type === 'bullet-list' && 'bullets' in segment) {
+          } else if (segment.type === 'list' && segment.listBlock) {
             return (
-              <ul
-                key={index}
-                style={{
-                  marginBottom: '1rem',
-                  paddingLeft: '1.5rem',
-                  listStyleType: 'disc',
-                }}
-              >
-                {segment.bullets.map((bullet, bulletIndex) => (
-                  <li
-                    key={bulletIndex}
-                    style={{
-                      marginBottom: '0.5rem',
-                      lineHeight: '1.6',
-                    }}
-                  >
-                    {bullet}
-                  </li>
-                ))}
-              </ul>
+              <div key={index}>
+                {renderListBlock(segment.listBlock, 0)}
+              </div>
             )
           } else if (segment.type === 'citation') {
             const citationName = segment.citationName || ''
