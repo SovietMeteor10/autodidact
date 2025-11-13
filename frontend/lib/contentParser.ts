@@ -55,7 +55,7 @@ function parseListBlock(
   let customChar: string | undefined = undefined
   let beginMatch: RegExpMatchArray | null = null
   let beginLength = 0
-  let endPattern: RegExp
+  let endPattern: RegExp = endItemizePattern // Initialize with default value
 
   // Try to match begin{itemize}
   const itemizeMatch = text.substring(startIndex).match(beginItemizePattern)
