@@ -275,7 +275,7 @@ export function parseContent(text: string): ParsedContent {
   const beginEnumeratePattern = /\\begin\{enumerate\}/g
   const beginListPattern = /\\begin\{list\}\[([^\]]+)\]/g
   
-  let listMatch
+  let listMatch: RegExpExecArray | null = null
   beginItemizePattern.lastIndex = 0
   while ((listMatch = beginItemizePattern.exec(normalizedText)) !== null) {
     const listResult = parseListBlock(normalizedText, listMatch.index)
