@@ -10,11 +10,12 @@ export function extractCitations(text: string): string[] {
   const seen = new Set<string>()
   const citePattern = /\\cite\{([^}]+)\}/g
 
-  let match
+  let match: RegExpExecArray | null = null
   while ((match = citePattern.exec(text)) !== null) {
-    if (!seen.has(match[1])) {
-      citations.push(match[1])
-      seen.add(match[1])
+    const currentMatch = match // Non-null alias for TypeScript
+    if (!seen.has(currentMatch[1])) {
+      citations.push(currentMatch[1])
+      seen.add(currentMatch[1])
     }
   }
 
