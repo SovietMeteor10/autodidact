@@ -278,12 +278,13 @@ export function parseContent(text: string): ParsedContent {
   let listMatch: RegExpExecArray | null = null
   beginItemizePattern.lastIndex = 0
   while ((listMatch = beginItemizePattern.exec(normalizedText)) !== null) {
-    const listResult = parseListBlock(normalizedText, listMatch.index)
+    const currentListMatch = listMatch // Non-null alias for TypeScript
+    const listResult = parseListBlock(normalizedText, currentListMatch.index)
     if (listResult) {
       matches.push({
         type: 'list',
-        index: listMatch.index,
-        content: normalizedText.substring(listMatch.index, listResult.endIndex),
+        index: currentListMatch.index,
+        content: normalizedText.substring(currentListMatch.index, listResult.endIndex),
         listBlock: listResult.listBlock,
       })
     }
@@ -291,18 +292,19 @@ export function parseContent(text: string): ParsedContent {
   
   beginEnumeratePattern.lastIndex = 0
   while ((listMatch = beginEnumeratePattern.exec(normalizedText)) !== null) {
+    const currentListMatch = listMatch // Non-null alias for TypeScript
     // Check if this is already part of a list block we found
     const alreadyInList = matches.some(m => 
-      m.type === 'list' && m.index <= listMatch.index && 
-      listMatch.index < m.index + m.content.length
+      m.type === 'list' && m.index <= currentListMatch.index && 
+      currentListMatch.index < m.index + m.content.length
     )
     if (!alreadyInList) {
-      const listResult = parseListBlock(normalizedText, listMatch.index)
+      const listResult = parseListBlock(normalizedText, currentListMatch.index)
       if (listResult) {
         matches.push({
           type: 'list',
-          index: listMatch.index,
-          content: normalizedText.substring(listMatch.index, listResult.endIndex),
+          index: currentListMatch.index,
+          content: normalizedText.substring(currentListMatch.index, listResult.endIndex),
           listBlock: listResult.listBlock,
         })
       }
@@ -311,18 +313,19 @@ export function parseContent(text: string): ParsedContent {
   
   beginListPattern.lastIndex = 0
   while ((listMatch = beginListPattern.exec(normalizedText)) !== null) {
+    const currentListMatch = listMatch // Non-null alias for TypeScript
     // Check if this is already part of a list block we found
     const alreadyInList = matches.some(m => 
-      m.type === 'list' && m.index <= listMatch.index && 
-      listMatch.index < m.index + m.content.length
+      m.type === 'list' && m.index <= currentListMatch.index && 
+      currentListMatch.index < m.index + m.content.length
     )
     if (!alreadyInList) {
-      const listResult = parseListBlock(normalizedText, listMatch.index)
+      const listResult = parseListBlock(normalizedText, currentListMatch.index)
       if (listResult) {
         matches.push({
           type: 'list',
-          index: listMatch.index,
-          content: normalizedText.substring(listMatch.index, listResult.endIndex),
+          index: currentListMatch.index,
+          content: normalizedText.substring(currentListMatch.index, listResult.endIndex),
           listBlock: listResult.listBlock,
         })
       }
