@@ -337,29 +337,43 @@ export function parseContent(text: string): ParsedContent {
   citePattern.lastIndex = 0
   while ((match = citePattern.exec(normalizedText)) !== null) {
     const currentMatch = match // Non-null alias for TypeScript
-    matches.push({
-      type: 'cite',
-      index: currentMatch.index,
-      content: currentMatch[0],
-      name: currentMatch[1],
-    })
-    if (!seenCitations.has(currentMatch[1])) {
-      citations.push(currentMatch[1])
-      seenCitations.add(currentMatch[1])
+    // Check if this citation is inside a list block
+    const insideList = matches.some(m => 
+      m.type === 'list' && m.index <= currentMatch.index && 
+      currentMatch.index < m.index + m.content.length
+    )
+    if (!insideList) {
+      matches.push({
+        type: 'cite',
+        index: currentMatch.index,
+        content: currentMatch[0],
+        name: currentMatch[1],
+      })
+      if (!seenCitations.has(currentMatch[1])) {
+        citations.push(currentMatch[1])
+        seenCitations.add(currentMatch[1])
+      }
     }
   }
 
-  // Find all embed matches (with backslash)
+  // Find all embed matches (with backslash, but skip those inside list blocks)
   embedPattern.lastIndex = 0
   while ((match = embedPattern.exec(normalizedText)) !== null) {
     const currentMatch = match // Non-null alias for TypeScript
-    matches.push({
-      type: 'embed',
-      index: currentMatch.index,
-      content: currentMatch[0],
-      name: currentMatch[1],
-    })
-    embeds.push(currentMatch[1])
+    // Check if this embed is inside a list block
+    const insideList = matches.some(m => 
+      m.type === 'list' && m.index <= currentMatch.index && 
+      currentMatch.index < m.index + m.content.length
+    )
+    if (!insideList) {
+      matches.push({
+        type: 'embed',
+        index: currentMatch.index,
+        content: currentMatch[0],
+        name: currentMatch[1],
+      })
+      embeds.push(currentMatch[1])
+    }
   }
 
   // Find embed matches without backslash (legacy format)
