@@ -673,3 +673,4 @@ export function extractEmbeds(text: string): string[] {
   return embeds
 }
 
+// TypeScript fixes applied - all regex exec loops properly typed
