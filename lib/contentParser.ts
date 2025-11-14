@@ -2,8 +2,19 @@
  * Content parsing utilities for plain text content with citations and embeds
  */
 
+export interface ListItem {
+  content: string
+  nestedLists?: ListBlock[]
+}
+
+export interface ListBlock {
+  type: 'bullet' | 'numeric' | 'arrow' | 'custom'
+  customChar?: string
+  items: ListItem[]
+}
+
 export interface ParsedContentSegment {
-  type: 'text' | 'citation' | 'embed' | 'heading' | 'subheading' | 'subsubheading' | 'bullet' | 'link' | 'tag' | 'numbering-control'
+  type: 'text' | 'citation' | 'embed' | 'heading' | 'subheading' | 'subsubheading' | 'bullet' | 'link' | 'tag' | 'list' | 'numbering-control'
   content: string
   citationName?: string
   embedUrl?: string
@@ -12,6 +23,7 @@ export interface ParsedContentSegment {
   linkText?: string
   linkUrl?: string
   tagPath?: string
+  listBlock?: ListBlock
   numberingStyle?: 'numeric' | 'alphabetic' | 'none'
 }
 
@@ -19,6 +31,197 @@ export interface ParsedContent {
   segments: ParsedContentSegment[]
   citations: string[] // Unique citation names in order of appearance
   embeds: string[] // Embed URLs in order of appearance
+}
+
+/**
+ * Parse a list block (itemize, enumerate, or list with custom type)
+ * Returns the parsed list block and the index after the end tag
+ */
+function parseListBlock(
+  text: string,
+  startIndex: number
+): { listBlock: ListBlock; endIndex: number } | null {
+  // Patterns for begin/end tags
+  const beginItemizePattern = /\\begin\{itemize\}/
+  const beginEnumeratePattern = /\\begin\{enumerate\}/
+  const beginListPattern = /\\begin\{list\}\[([^\]]+)\]/
+  const endItemizePattern = /\\end\{itemize\}/
+  const endEnumeratePattern = /\\end\{enumerate\}/
+  const endListPattern = /\\end\{list\}/
+  const itemPattern = /\\item\{([^}]+)\}/
+
+  // Find the begin tag at startIndex
+  let listType: 'bullet' | 'numeric' | 'arrow' | 'custom' = 'bullet'
+  let customChar: string | undefined = undefined
+  let beginMatch: RegExpMatchArray | null = null
+  let beginLength = 0
+  let endPattern: RegExp = endItemizePattern // Initialize with default value
+
+  // Try to match begin{itemize}
+  const itemizeMatch = text.substring(startIndex).match(beginItemizePattern)
+  if (itemizeMatch && itemizeMatch.index === 0) {
+    listType = 'bullet'
+    beginMatch = itemizeMatch
+    beginLength = itemizeMatch[0].length
+    endPattern = endItemizePattern
+  } else {
+    // Try to match begin{enumerate}
+    const enumerateMatch = text.substring(startIndex).match(beginEnumeratePattern)
+    if (enumerateMatch && enumerateMatch.index === 0) {
+      listType = 'numeric'
+      beginMatch = enumerateMatch
+      beginLength = enumerateMatch[0].length
+      endPattern = endEnumeratePattern
+    } else {
+      // Try to match begin{list}[type]
+      const listMatch = text.substring(startIndex).match(beginListPattern)
+      if (listMatch && listMatch.index === 0) {
+        beginMatch = listMatch
+        beginLength = listMatch[0].length
+        endPattern = endListPattern
+        const typeStr = listMatch[1].trim().toLowerCase()
+        if (typeStr === 'arrow' || typeStr === '→') {
+          listType = 'arrow'
+        } else {
+          listType = 'custom'
+          customChar = listMatch[1].trim()
+        }
+      }
+    }
+  }
+
+  if (!beginMatch) {
+    return null
+  }
+
+  // Find the matching end tag (handle nested lists)
+  let depth = 1
+  let currentIndex = startIndex + beginLength
+  const items: Array<{ content: string }> = []
+  let currentItemContent: string[] = []
+  let currentItemStart: number | null = null
+
+  while (depth > 0 && currentIndex < text.length) {
+    // Check for nested begin tags
+    const nextBeginItemize = text.substring(currentIndex).search(beginItemizePattern)
+    const nextBeginEnumerate = text.substring(currentIndex).search(beginEnumeratePattern)
+    const nextBeginList = text.substring(currentIndex).search(beginListPattern)
+    const nextEndItemize = text.substring(currentIndex).search(endItemizePattern)
+    const nextEndEnumerate = text.substring(currentIndex).search(endEnumeratePattern)
+    const nextEndList = text.substring(currentIndex).search(endListPattern)
+    const nextItem = text.substring(currentIndex).search(itemPattern)
+
+    // Find the earliest match
+    const positions: Array<{ pos: number; type: 'begin' | 'end' | 'item' }> = []
+    if (nextBeginItemize !== -1) positions.push({ pos: nextBeginItemize, type: 'begin' })
+    if (nextBeginEnumerate !== -1) positions.push({ pos: nextBeginEnumerate, type: 'begin' })
+    if (nextBeginList !== -1) positions.push({ pos: nextBeginList, type: 'begin' })
+    if (nextEndItemize !== -1) positions.push({ pos: nextEndItemize, type: 'end' })
+    if (nextEndEnumerate !== -1) positions.push({ pos: nextEndEnumerate, type: 'end' })
+    if (nextEndList !== -1) positions.push({ pos: nextEndList, type: 'end' })
+    if (nextItem !== -1) positions.push({ pos: nextItem, type: 'item' })
+
+    if (positions.length === 0) break
+
+    positions.sort((a, b) => a.pos - b.pos)
+    const next = positions[0]
+    const absolutePos = currentIndex + next.pos
+
+    if (next.type === 'item') {
+      // Save previous item if exists
+      if (currentItemStart !== null) {
+        // Add any text between previous item end and this item start
+        if (absolutePos > currentItemStart) {
+          currentItemContent.push(text.substring(currentItemStart, absolutePos))
+        }
+        items.push({ content: currentItemContent.join('').trim() })
+        currentItemContent = []
+      }
+      // Extract item content from braces
+      const itemMatch = text.substring(absolutePos).match(itemPattern)
+      if (itemMatch) {
+        // Get content from inside braces
+        currentItemContent.push(itemMatch[1])
+        // Start tracking any text after the \item{...} tag
+        currentItemStart = absolutePos + itemMatch[0].length
+        currentIndex = currentItemStart
+      } else {
+        currentIndex++
+      }
+    } else if (next.type === 'begin') {
+      depth++
+      // Skip past the begin tag
+      const beginMatch = text.substring(absolutePos).match(beginItemizePattern) ||
+                        text.substring(absolutePos).match(beginEnumeratePattern) ||
+                        text.substring(absolutePos).match(beginListPattern)
+      if (beginMatch) {
+        currentIndex = absolutePos + beginMatch[0].length
+      } else {
+        currentIndex++
+      }
+    } else if (next.type === 'end') {
+      depth--
+      if (depth === 0) {
+        // Save last item if exists
+        if (currentItemStart !== null) {
+          // Add any text between last item and end tag
+          if (absolutePos > currentItemStart) {
+            currentItemContent.push(text.substring(currentItemStart, absolutePos))
+          }
+          items.push({ content: currentItemContent.join('').trim() })
+        }
+        // Found matching end tag
+        const endMatch = text.substring(absolutePos).match(endPattern)
+        if (endMatch) {
+          currentIndex = absolutePos + endMatch[0].length
+        }
+        break
+      } else {
+        // Nested end tag, skip past it
+        const endMatch = text.substring(absolutePos).match(endItemizePattern) ||
+                        text.substring(absolutePos).match(endEnumeratePattern) ||
+                        text.substring(absolutePos).match(endListPattern)
+        if (endMatch) {
+          currentIndex = absolutePos + endMatch[0].length
+        } else {
+          currentIndex++
+        }
+      }
+    } else {
+      currentIndex++
+    }
+  }
+
+  // Process items: parse nested lists in content
+  const processedItems: ListItem[] = []
+  for (const item of items) {
+    const itemContent = item.content
+    // Parse nested lists in item content
+    const nestedLists: ListBlock[] = []
+    let nestedIndex = 0
+    while (nestedIndex < itemContent.length) {
+      const nestedList = parseListBlock(itemContent, nestedIndex)
+      if (nestedList) {
+        nestedLists.push(nestedList.listBlock)
+        nestedIndex = nestedList.endIndex
+      } else {
+        nestedIndex++
+      }
+    }
+    processedItems.push({
+      content: itemContent,
+      nestedLists: nestedLists.length > 0 ? nestedLists : undefined,
+    })
+  }
+
+  return {
+    listBlock: {
+      type: listType,
+      customChar,
+      items: processedItems,
+    },
+    endIndex: currentIndex,
+  }
 }
 
 /**
@@ -57,16 +260,79 @@ export function parseContent(text: string): ParsedContent {
 
   let lastIndex = 0
   const matches: Array<{ 
-    type: 'cite' | 'embed' | 'heading' | 'subheading' | 'subsubheading' | 'bullet' | 'link' | 'tag' | 'numbering-control'
+    type: 'cite' | 'embed' | 'heading' | 'subheading' | 'subsubheading' | 'bullet' | 'link' | 'tag' | 'list' | 'numbering-control'
     index: number
     content: string
-    name: string
+    name?: string
     linkText?: string
     linkUrl?: string
+    listBlock?: ListBlock
     numberingStyle?: 'numeric' | 'alphabetic' | 'none'
   }> = []
 
-  // Find all citation matches
+  // First, find all list blocks
+  const beginItemizePattern = /\\begin\{itemize\}/g
+  const beginEnumeratePattern = /\\begin\{enumerate\}/g
+  const beginListPattern = /\\begin\{list\}\[([^\]]+)\]/g
+  
+  let listMatch: RegExpExecArray | null = null
+  beginItemizePattern.lastIndex = 0
+  while ((listMatch = beginItemizePattern.exec(normalizedText)) !== null) {
+    const currentListMatch = listMatch // Non-null alias for TypeScript
+    const listResult = parseListBlock(normalizedText, currentListMatch.index)
+    if (listResult) {
+      matches.push({
+        type: 'list',
+        index: currentListMatch.index,
+        content: normalizedText.substring(currentListMatch.index, listResult.endIndex),
+        listBlock: listResult.listBlock,
+      })
+    }
+  }
+  
+  beginEnumeratePattern.lastIndex = 0
+  while ((listMatch = beginEnumeratePattern.exec(normalizedText)) !== null) {
+    const currentListMatch = listMatch // Non-null alias for TypeScript
+    // Check if this is already part of a list block we found
+    const alreadyInList = matches.some(m => 
+      m.type === 'list' && m.index <= currentListMatch.index && 
+      currentListMatch.index < m.index + m.content.length
+    )
+    if (!alreadyInList) {
+      const listResult = parseListBlock(normalizedText, currentListMatch.index)
+      if (listResult) {
+        matches.push({
+          type: 'list',
+          index: currentListMatch.index,
+          content: normalizedText.substring(currentListMatch.index, listResult.endIndex),
+          listBlock: listResult.listBlock,
+        })
+      }
+    }
+  }
+  
+  beginListPattern.lastIndex = 0
+  while ((listMatch = beginListPattern.exec(normalizedText)) !== null) {
+    const currentListMatch = listMatch // Non-null alias for TypeScript
+    // Check if this is already part of a list block we found
+    const alreadyInList = matches.some(m => 
+      m.type === 'list' && m.index <= currentListMatch.index && 
+      currentListMatch.index < m.index + m.content.length
+    )
+    if (!alreadyInList) {
+      const listResult = parseListBlock(normalizedText, currentListMatch.index)
+      if (listResult) {
+        matches.push({
+          type: 'list',
+          index: currentListMatch.index,
+          content: normalizedText.substring(currentListMatch.index, listResult.endIndex),
+          listBlock: listResult.listBlock,
+        })
+      }
+    }
+  }
+
+  // Find all citation matches (but skip those inside list blocks)
   let match
   citePattern.lastIndex = 0
   while ((match = citePattern.exec(normalizedText)) !== null) {
@@ -293,6 +559,12 @@ export function parseContent(text: string): ParsedContent {
         type: 'tag',
         content: match.content,
         tagPath: match.name,
+      })
+    } else if (match.type === 'list') {
+      segments.push({
+        type: 'list',
+        content: match.content,
+        listBlock: match.listBlock,
       })
     } else if (match.type === 'numbering-control') {
       segments.push({
