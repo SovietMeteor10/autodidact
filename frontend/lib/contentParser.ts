@@ -333,24 +333,25 @@ export function parseContent(text: string): ParsedContent {
   }
 
   // Find all citation matches (but skip those inside list blocks)
-  let match
+  let match: RegExpExecArray | null = null
   citePattern.lastIndex = 0
   while ((match = citePattern.exec(normalizedText)) !== null) {
+    const currentMatch = match // Non-null alias for TypeScript
     // Check if this citation is inside a list block
     const insideList = matches.some(m => 
-      m.type === 'list' && m.index <= match.index && 
-      match.index < m.index + m.content.length
+      m.type === 'list' && m.index <= currentMatch.index && 
+      currentMatch.index < m.index + m.content.length
     )
     if (!insideList) {
       matches.push({
         type: 'cite',
-        index: match.index,
-        content: match[0],
-        name: match[1],
+        index: currentMatch.index,
+        content: currentMatch[0],
+        name: currentMatch[1],
       })
-      if (!seenCitations.has(match[1])) {
-        citations.push(match[1])
-        seenCitations.add(match[1])
+      if (!seenCitations.has(currentMatch[1])) {
+        citations.push(currentMatch[1])
+        seenCitations.add(currentMatch[1])
       }
     }
   }
@@ -358,19 +359,20 @@ export function parseContent(text: string): ParsedContent {
   // Find all embed matches (with backslash, but skip those inside list blocks)
   embedPattern.lastIndex = 0
   while ((match = embedPattern.exec(normalizedText)) !== null) {
+    const currentMatch = match // Non-null alias for TypeScript
     // Check if this embed is inside a list block
     const insideList = matches.some(m => 
-      m.type === 'list' && m.index <= match.index && 
-      match.index < m.index + m.content.length
+      m.type === 'list' && m.index <= currentMatch.index && 
+      currentMatch.index < m.index + m.content.length
     )
     if (!insideList) {
       matches.push({
         type: 'embed',
-        index: match.index,
-        content: match[0],
-        name: match[1],
+        index: currentMatch.index,
+        content: currentMatch[0],
+        name: currentMatch[1],
       })
-      embeds.push(match[1])
+      embeds.push(currentMatch[1])
     }
   }
 
@@ -378,15 +380,16 @@ export function parseContent(text: string): ParsedContent {
   // Check original text for embed{...} pattern (without backslash)
   embedPatternNoSlash.lastIndex = 0
   while ((match = embedPatternNoSlash.exec(text)) !== null) {
+    const currentMatch = match // Non-null alias for TypeScript
     // Check if there's a backslash before this match (if so, skip it - it's \embed{...})
-    const charBefore = match.index > 0 ? text[match.index - 1] : ''
+    const charBefore = currentMatch.index > 0 ? text[currentMatch.index - 1] : ''
     if (charBefore === '\\') {
       continue // Skip this match, it's \embed{...} which is already handled
     }
     
-    const url = match[1]
-    const matchIndex = match.index
-    const embedContent = match[0]
+    const url = currentMatch[1]
+    const matchIndex = currentMatch.index
+    const embedContent = currentMatch[0]
     
     // Only add if not already found with backslash at this position
     const existingIndex = matches.findIndex(
@@ -406,16 +409,17 @@ export function parseContent(text: string): ParsedContent {
   // Find all heading matches (but skip those inside list blocks)
   headingPattern.lastIndex = 0
   while ((match = headingPattern.exec(normalizedText)) !== null) {
+    const currentMatch = match // Non-null alias for TypeScript
     const insideList = matches.some(m => 
-      m.type === 'list' && m.index <= match.index && 
-      match.index < m.index + m.content.length
+      m.type === 'list' && m.index <= currentMatch.index && 
+      currentMatch.index < m.index + m.content.length
     )
     if (!insideList) {
       matches.push({
         type: 'heading',
-        index: match.index,
-        content: match[0],
-        name: match[1],
+        index: currentMatch.index,
+        content: currentMatch[0],
+        name: currentMatch[1],
       })
     }
   }
@@ -423,16 +427,17 @@ export function parseContent(text: string): ParsedContent {
   // Find all subheading matches (but skip those inside list blocks)
   subheadingPattern.lastIndex = 0
   while ((match = subheadingPattern.exec(normalizedText)) !== null) {
+    const currentMatch = match // Non-null alias for TypeScript
     const insideList = matches.some(m => 
-      m.type === 'list' && m.index <= match.index && 
-      match.index < m.index + m.content.length
+      m.type === 'list' && m.index <= currentMatch.index && 
+      currentMatch.index < m.index + m.content.length
     )
     if (!insideList) {
       matches.push({
         type: 'subheading',
-        index: match.index,
-        content: match[0],
-        name: match[1],
+        index: currentMatch.index,
+        content: currentMatch[0],
+        name: currentMatch[1],
       })
     }
   }
@@ -440,16 +445,17 @@ export function parseContent(text: string): ParsedContent {
   // Find all subsubheading matches (but skip those inside list blocks)
   subsubheadingPattern.lastIndex = 0
   while ((match = subsubheadingPattern.exec(normalizedText)) !== null) {
+    const currentMatch = match // Non-null alias for TypeScript
     const insideList = matches.some(m => 
-      m.type === 'list' && m.index <= match.index && 
-      match.index < m.index + m.content.length
+      m.type === 'list' && m.index <= currentMatch.index && 
+      currentMatch.index < m.index + m.content.length
     )
     if (!insideList) {
       matches.push({
         type: 'subsubheading',
-        index: match.index,
-        content: match[0],
-        name: match[1],
+        index: currentMatch.index,
+        content: currentMatch[0],
+        name: currentMatch[1],
       })
     }
   }
@@ -457,17 +463,18 @@ export function parseContent(text: string): ParsedContent {
   // Find all bullet matches (but skip those inside list blocks)
   bulletPattern.lastIndex = 0
   while ((match = bulletPattern.exec(normalizedText)) !== null) {
+    const currentMatch = match // Non-null alias for TypeScript
     // Check if this bullet is inside a list block
     const insideList = matches.some(m => 
-      m.type === 'list' && m.index <= match.index && 
-      match.index < m.index + m.content.length
+      m.type === 'list' && m.index <= currentMatch.index && 
+      currentMatch.index < m.index + m.content.length
     )
     if (!insideList) {
       matches.push({
         type: 'bullet',
-        index: match.index,
-        content: match[0],
-        name: match[1],
+        index: currentMatch.index,
+        content: currentMatch[0],
+        name: currentMatch[1],
       })
     }
   }
@@ -475,32 +482,35 @@ export function parseContent(text: string): ParsedContent {
   // Find all link matches: \link{text, url}
   linkPattern.lastIndex = 0
   while ((match = linkPattern.exec(normalizedText)) !== null) {
+    const currentMatch = match // Non-null alias for TypeScript
     matches.push({
       type: 'link',
-      index: match.index,
-      content: match[0],
-      name: match[2], // URL
-      linkText: match[1].trim(), // Text
-      linkUrl: match[2].trim(), // URL
+      index: currentMatch.index,
+      content: currentMatch[0],
+      name: currentMatch[2], // URL
+      linkText: currentMatch[1].trim(), // Text
+      linkUrl: currentMatch[2].trim(), // URL
     })
   }
 
   // Find all tag matches: \tag{path}
   tagPattern.lastIndex = 0
   while ((match = tagPattern.exec(normalizedText)) !== null) {
+    const currentMatch = match // Non-null alias for TypeScript
     matches.push({
       type: 'tag',
-      index: match.index,
-      content: match[0],
-      name: match[1].trim(), // Path
+      index: currentMatch.index,
+      content: currentMatch[0],
+      name: currentMatch[1].trim(), // Path
     })
   }
 
   // Find all numbering control matches: {numeric = false}, {style = "alphabetic"}, etc.
   numberingControlPattern.lastIndex = 0
   while ((match = numberingControlPattern.exec(normalizedText)) !== null) {
-    const key = match[1].trim().toLowerCase()
-    const value = match[2].trim().toLowerCase().replace(/['"]/g, '') // Remove quotes
+    const currentMatch = match // Non-null alias for TypeScript
+    const key = currentMatch[1].trim().toLowerCase()
+    const value = currentMatch[2].trim().toLowerCase().replace(/['"]/g, '') // Remove quotes
     
     let numberingStyle: 'numeric' | 'alphabetic' | 'none' | undefined
     
@@ -525,8 +535,8 @@ export function parseContent(text: string): ParsedContent {
     if (numberingStyle !== undefined) {
       matches.push({
         type: 'numbering-control',
-        index: match.index,
-        content: match[0],
+        index: currentMatch.index,
+        content: currentMatch[0],
         name: key,
         numberingStyle,
       })
