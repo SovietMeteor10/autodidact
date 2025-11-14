@@ -66,9 +66,15 @@ export default function HomeTree({ nodes }: HomeTreeProps) {
     }
     
     // Calculate prefix for children (vertical lines)
+    // The vertical "│" should align with the "├" or "└" in the parent connector
+    // "├── " is 4 chars, "│   " is 4 chars - they align perfectly
     const childPrefix = depth === 0 
       ? '' 
       : parentPrefix + (isLast ? '    ' : '│   ')
+
+    // Simple padding: 2 spaces for entire tree, no depth-based calculation
+    // The connector handles all visual indentation
+    const calculatedPadding = '2ch' // 2 character widths for the entire tree
 
     return (
       <div key={node.path}>
@@ -78,7 +84,7 @@ export default function HomeTree({ nodes }: HomeTreeProps) {
             alignItems: 'center',
             marginBottom: '0.25rem',
             fontFamily: 'monospace',
-            paddingLeft: (depth + 1) * 0.5 + 'rem',
+            paddingLeft: calculatedPadding,
           }}
         >
           {/* Tree connector */}
