@@ -333,46 +333,49 @@ export function parseContent(text: string): ParsedContent {
   }
 
   // Find all citation matches (but skip those inside list blocks)
-  let match
+  let match: RegExpExecArray | null = null
   citePattern.lastIndex = 0
   while ((match = citePattern.exec(normalizedText)) !== null) {
+    const currentMatch = match // Non-null alias for TypeScript
     matches.push({
       type: 'cite',
-      index: match.index,
-      content: match[0],
-      name: match[1],
+      index: currentMatch.index,
+      content: currentMatch[0],
+      name: currentMatch[1],
     })
-    if (!seenCitations.has(match[1])) {
-      citations.push(match[1])
-      seenCitations.add(match[1])
+    if (!seenCitations.has(currentMatch[1])) {
+      citations.push(currentMatch[1])
+      seenCitations.add(currentMatch[1])
     }
   }
 
   // Find all embed matches (with backslash)
   embedPattern.lastIndex = 0
   while ((match = embedPattern.exec(normalizedText)) !== null) {
+    const currentMatch = match // Non-null alias for TypeScript
     matches.push({
       type: 'embed',
-      index: match.index,
-      content: match[0],
-      name: match[1],
+      index: currentMatch.index,
+      content: currentMatch[0],
+      name: currentMatch[1],
     })
-    embeds.push(match[1])
+    embeds.push(currentMatch[1])
   }
 
   // Find embed matches without backslash (legacy format)
   // Check original text for embed{...} pattern (without backslash)
   embedPatternNoSlash.lastIndex = 0
   while ((match = embedPatternNoSlash.exec(text)) !== null) {
+    const currentMatch = match // Non-null alias for TypeScript
     // Check if there's a backslash before this match (if so, skip it - it's \embed{...})
-    const charBefore = match.index > 0 ? text[match.index - 1] : ''
+    const charBefore = currentMatch.index > 0 ? text[currentMatch.index - 1] : ''
     if (charBefore === '\\') {
       continue // Skip this match, it's \embed{...} which is already handled
     }
     
-    const url = match[1]
-    const matchIndex = match.index
-    const embedContent = match[0]
+    const url = currentMatch[1]
+    const matchIndex = currentMatch.index
+    const embedContent = currentMatch[0]
     
     // Only add if not already found with backslash at this position
     const existingIndex = matches.findIndex(
@@ -392,76 +395,83 @@ export function parseContent(text: string): ParsedContent {
   // Find all heading matches
   headingPattern.lastIndex = 0
   while ((match = headingPattern.exec(normalizedText)) !== null) {
+    const currentMatch = match // Non-null alias for TypeScript
     matches.push({
       type: 'heading',
-      index: match.index,
-      content: match[0],
-      name: match[1],
+      index: currentMatch.index,
+      content: currentMatch[0],
+      name: currentMatch[1],
     })
   }
 
   // Find all subheading matches
   subheadingPattern.lastIndex = 0
   while ((match = subheadingPattern.exec(normalizedText)) !== null) {
+    const currentMatch = match // Non-null alias for TypeScript
     matches.push({
       type: 'subheading',
-      index: match.index,
-      content: match[0],
-      name: match[1],
+      index: currentMatch.index,
+      content: currentMatch[0],
+      name: currentMatch[1],
     })
   }
 
   // Find all subsubheading matches
   subsubheadingPattern.lastIndex = 0
   while ((match = subsubheadingPattern.exec(normalizedText)) !== null) {
+    const currentMatch = match // Non-null alias for TypeScript
     matches.push({
       type: 'subsubheading',
-      index: match.index,
-      content: match[0],
-      name: match[1],
+      index: currentMatch.index,
+      content: currentMatch[0],
+      name: currentMatch[1],
     })
   }
 
   // Find all bullet matches
   bulletPattern.lastIndex = 0
   while ((match = bulletPattern.exec(normalizedText)) !== null) {
+    const currentMatch = match // Non-null alias for TypeScript
     matches.push({
       type: 'bullet',
-      index: match.index,
-      content: match[0],
-      name: match[1],
+      index: currentMatch.index,
+      content: currentMatch[0],
+      name: currentMatch[1],
     })
   }
 
   // Find all link matches: \link{text, url}
   linkPattern.lastIndex = 0
   while ((match = linkPattern.exec(normalizedText)) !== null) {
+    const currentMatch = match // Non-null alias for TypeScript
     matches.push({
       type: 'link',
-      index: match.index,
-      content: match[0],
-      name: match[2], // URL
-      linkText: match[1].trim(), // Text
-      linkUrl: match[2].trim(), // URL
+      index: currentMatch.index,
+      content: currentMatch[0],
+      name: currentMatch[2], // URL
+      linkText: currentMatch[1].trim(), // Text
+      linkUrl: currentMatch[2].trim(), // URL
     })
   }
 
   // Find all tag matches: \tag{path}
   tagPattern.lastIndex = 0
   while ((match = tagPattern.exec(normalizedText)) !== null) {
+    const currentMatch = match // Non-null alias for TypeScript
     matches.push({
       type: 'tag',
-      index: match.index,
-      content: match[0],
-      name: match[1].trim(), // Path
+      index: currentMatch.index,
+      content: currentMatch[0],
+      name: currentMatch[1].trim(), // Path
     })
   }
 
   // Find all numbering control matches: {numeric = false}, {style = "alphabetic"}, etc.
   numberingControlPattern.lastIndex = 0
   while ((match = numberingControlPattern.exec(normalizedText)) !== null) {
-    const key = match[1].trim().toLowerCase()
-    const value = match[2].trim().toLowerCase().replace(/['"]/g, '') // Remove quotes
+    const currentMatch = match // Non-null alias for TypeScript
+    const key = currentMatch[1].trim().toLowerCase()
+    const value = currentMatch[2].trim().toLowerCase().replace(/['"]/g, '') // Remove quotes
     
     let numberingStyle: 'numeric' | 'alphabetic' | 'none' | undefined
     
@@ -486,8 +496,8 @@ export function parseContent(text: string): ParsedContent {
     if (numberingStyle !== undefined) {
       matches.push({
         type: 'numbering-control',
-        index: match.index,
-        content: match[0],
+        index: currentMatch.index,
+        content: currentMatch[0],
         name: key,
         numberingStyle,
       })
@@ -621,11 +631,12 @@ export function extractCitations(text: string): string[] {
   const seen = new Set<string>()
   const citePattern = /\\cite\{([^}]+)\}/g
 
-  let match
+  let match: RegExpExecArray | null = null
   while ((match = citePattern.exec(text)) !== null) {
-    if (!seen.has(match[1])) {
-      citations.push(match[1])
-      seen.add(match[1])
+    const currentMatch = match // Non-null alias for TypeScript
+    if (!seen.has(currentMatch[1])) {
+      citations.push(currentMatch[1])
+      seen.add(currentMatch[1])
     }
   }
 
@@ -639,9 +650,10 @@ export function extractEmbeds(text: string): string[] {
   const embeds: string[] = []
   const embedPattern = /\\embed\{([^}]+)\}/g
 
-  let match
+  let match: RegExpExecArray | null = null
   while ((match = embedPattern.exec(text)) !== null) {
-    embeds.push(match[1])
+    const currentMatch = match // Non-null alias for TypeScript
+    embeds.push(currentMatch[1])
   }
 
   return embeds
